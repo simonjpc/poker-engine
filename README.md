@@ -1,5 +1,5 @@
 # poker-engine
-Basic poker engine for simulation and training
+No-Limit Texas Hold'em poker engine for simulation and training
 
 ## Components
 
