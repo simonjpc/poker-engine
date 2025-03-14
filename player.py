@@ -12,6 +12,7 @@ class Player:
         self.position = position        # Seat position at the table
         self.hole_cards = []            # Two private cards
         self.current_bet = 0            # Chips committed to the pot in the current round
+        self.current_hand_bet = 0
         self.folded = False             # Whether the player has folded
         self.all_in = False             # Whether the player is all-in
 
@@ -43,7 +44,9 @@ class Player:
                 if action == "raise":
                     min_raise, max_raise = valid_actions["raise"]
                     amount = int(input(f"Enter raise amount ({min_raise}-{max_raise}): "))
-                    if min_raise <= amount <= max_raise:
+                    if amount > max_raise:
+                        return "raise", max_raise
+                    elif min_raise <= amount <= max_raise:
                         return "raise", amount
                 else:
                     return action, valid_actions.get(action, None)
@@ -58,12 +61,14 @@ class Player:
         """
         if amount >= self.stack:
             self.current_bet += self.stack  # All-in
+            self.current_hand_bet += self.stack
             self.stack = 0
             self.all_in = True
             print(f"{self.name} goes all-in with {self.current_bet} chips!")
         else:
             self.stack -= amount
             self.current_bet += amount
+            self.current_hand_bet += amount
             print(f"{self.name} bets {amount} chips. Remaining stack: {self.stack}")
 
     def fold_hand(self):
@@ -79,6 +84,7 @@ class Player:
         """
         self.hole_cards = []
         self.current_bet = 0
+        self.current_hand_bet = 0
         self.folded = False
         self.all_in = False
 

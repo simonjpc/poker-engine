@@ -1,6 +1,12 @@
 # poker-engine
 No-Limit Texas Hold'em poker engine for simulation and training
 
+## TODO
+
+- test folding before the end of the game
+- test all in on different turns
+- adjust where necessary
+
 ## Components
 
 * Game State Management to track everything happening in a hand
@@ -33,3 +39,4 @@ No-Limit Texas Hold'em poker engine for simulation and training
   - Shuffles and deals cards randomly to ensure fair play.
 
 * Logging & Debugging
+
