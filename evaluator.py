@@ -129,8 +129,8 @@ class HandEvaluator:
         :param card: A string representing a card (e.g., "A♠", "10♦", "K♣")
         :return: Numeric value (2-14)
         """
-        rank = card[:-1]  # Extract the rank part (e.g., "A" from "A♠")
-        rank_values = {"2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, 
+        rank = card[0]  # Extract the rank part (e.g., "A" from "A♠")
+        rank_values = {"2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "T": 10, 
                        "J": 11, "Q": 12, "K": 13, "A": 14}
         return rank_values[rank]
 
@@ -140,10 +140,27 @@ class HandEvaluator:
         Returns a numerical ranking of a hand.
 
         :param hand: A list of 5 card strings.
-        :return: Tuple (hand rank index, sorted card values)
+        :return: Tuple (hand rank index, sorted values for tiebreaking)
         """
+        values = [HandEvaluator.card_value(card) for card in hand]
+        value_counts = Counter(values)
         hand_rank = HandEvaluator.classify_hand(hand)
-        return HandEvaluator.HAND_RANKINGS[hand_rank], sorted([HandEvaluator.card_value(card) for card in hand], reverse=True)
+        
+        # Sort values first by frequency (descending), then by card value (descending)
+        values_by_freq = []
+        # First add pairs/trips/quads (frequency > 1)
+        for val, count in sorted(value_counts.items(), key=lambda x: (-x[1], -x[0])):
+            if count > 1:
+                values_by_freq.extend([val] * count)
+        # Then add kickers (frequency = 1)
+        for val, count in sorted(value_counts.items(), key=lambda x: (-x[0])):
+            if count == 1:
+                values_by_freq.append(val)
+        
+        return (
+            HandEvaluator.HAND_RANKINGS[hand_rank],  # Primary rank
+            tuple(values_by_freq)  # Secondary rank as immutable tuple
+        )
 
     @staticmethod
     def compare_hands(players, community_cards):
@@ -154,12 +171,12 @@ class HandEvaluator:
         :param community_cards: List of 5 community cards.
         :return: List of winners.
         """
-        best_rank = (0, [])  # Default best rank
+        best_rank = (0, tuple())  # Default best rank
         winners = []
 
         for player_name, hole_cards in players:
             hand_rank, best_hand = HandEvaluator.evaluate_hand(hole_cards, community_cards)
-            hand_score = (HandEvaluator.HAND_RANKINGS[hand_rank], best_hand)
+            hand_score = HandEvaluator.rank_hand(best_hand)
 
             if hand_score > best_rank:
                 best_rank = hand_score

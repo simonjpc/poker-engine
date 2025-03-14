@@ -2,11 +2,11 @@ from player import Player
 
 class BettingRound:
     """
-    Manages a single betting round in No-Limit Texas Hold’em.
+    Manages a single betting round in No-Limit Texas Hold'em.
     Ensures correct player turn order and valid actions.
     """
 
-    def __init__(self, players, pot, dealer_position, small_blind, preflop):
+    def __init__(self, players, pot, dealer_position, sb_position, bb_position, small_blind, preflop):
         """
         Initializes a new betting round.
 
@@ -21,6 +21,8 @@ class BettingRound:
         self.last_raiser = None
         self.active_bets = {player: player.current_bet for player in self.players}  # Track bet amounts
         self.dealer_position = dealer_position
+        self.sb_position = sb_position
+        self.bb_position = bb_position
         self.preflop = preflop
         self.small_blind = small_blind
 
@@ -54,38 +56,45 @@ class BettingRound:
         :param amount: The bet amount.
         """
         # Adjust current_bet based on player position (small and big blinds)
-        if player.position == 1 and self.preflop:  # Small Blind
+        if player.position == self.sb_position and self.preflop:  # Small Blind
             current_bet = self.current_bet - self.small_blind
-        elif player.position == 2 and self.preflop:  # Big Blind
+        elif player.position == self.bb_position and self.preflop:  # Big Blind
             current_bet = self.current_bet - 2 * self.small_blind
         else:
             current_bet = self.current_bet
 
-        # **NEW FIX**: Allow Big Blind to check (call for 0) if no one raised
-        if player.position == 2 and amount == 0 and current_bet <= 0:
+        # Allow Big Blind to check if no one raised
+        if player.position == self.bb_position and amount == 0 and current_bet <= 0:
             print(f"{player.name} checks (Big Blind).")
             return
 
-        # Ensure the bet is at least the current bet unless going all-in
+        # Handle all-in situations
         if amount < current_bet:
-            raise ValueError(f"{player.name} must at least call the current bet of {current_bet} chips!")
+            if amount == player.stack:  # Player is going all-in with less than the call amount
+                print(f"{player.name} goes all-in with {amount} chips!")
+                player.place_bet(amount)
+                self.active_bets[player] += amount
+                self.pot += amount
+                player.all_in = True
+                return
+            else:
+                raise ValueError(f"{player.name} must at least call the current bet of {current_bet} chips!")
 
         # Process the bet
-        player.place_bet(amount)  # Deduct chips from player's stack
-        self.active_bets[player] += amount  # Update player's total bet contribution
-        self.pot += amount  # Add to the pot
+        bet_amount = min(amount, player.stack)  # Can't bet more than you have
+        player.place_bet(bet_amount)  # Deduct chips from player's stack
+        self.active_bets[player] += bet_amount  # Update player's total bet contribution
+        self.pot += bet_amount  # Add to the pot
 
         # If this bet is a raise, update the highest bet
-        if amount > self.current_bet:
-            self.current_bet = amount
+        if bet_amount > self.current_bet:
+            self.current_bet = bet_amount
             self.last_raiser = player  # Track the last raiser
 
 
     def process_actions(self):
         """
-        Handles a full betting round, ensuring correct betting order:
-        - Preflop: Starts with UTG, ends at BB (unless raised)
-        - Postflop: Starts with SB (or first active player left of dealer), stops correctly
+        Handles a full betting round, ensuring correct betting order.
         """
         last_raiser = -1
         print([bo.name for bo in self.betting_order if not bo.folded])
@@ -93,11 +102,15 @@ class BettingRound:
             action_taken = False  # Track if a raise occurred
             for i in range(len(self.betting_order)):
                 player = self.betting_order[i]
-                # print(i, [bo.name for bo in self.betting_order])
-                if player.folded or player.all_in or (last_raiser > -1 and i >= last_raiser and not action_taken):
-                    continue  # Skip players who folded or are all-in
+                # Skip players who folded, are all-in, have no chips, or have already acted after the last raise
+                if (player.folded or player.all_in or player.stack == 0 or 
+                    (last_raiser > -1 and i >= last_raiser and not action_taken)):
+                    continue
 
                 valid_actions = self.get_valid_actions(player)
+                if valid_actions is None:  # Player has no chips
+                    continue
+
                 action, amount = player.make_decision(valid_actions)
 
                 if action == "fold":
@@ -157,8 +170,16 @@ class BettingRound:
         :param player: The Player object whose turn it is.
         :return: Dictionary of valid actions.
         """
+        # Skip players with no chips (they're effectively all-in)
+        if player.stack == 0:
+            return None
+
         current_player_bet = self.active_bets[player]  # Amount this player has already committed
         amount_to_call = self.current_bet - current_player_bet  # Correct call amount
+
+        # If player can't afford the full call amount, they can go all-in instead
+        if amount_to_call > player.stack:
+            amount_to_call = player.stack
 
         min_raise = max(self.current_bet * 2, self.current_bet + 1)  # Min raise must be double previous bet
         max_raise = player.stack  # Max raise is all-in

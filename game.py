@@ -24,7 +24,7 @@ from evaluator import HandEvaluator
 
 class Game:
     """
-    Manages the entire game of No-Limit Texas Hold’em.
+    Manages the entire game of No-Limit Texas Hold'em.
     Handles player actions, betting rounds, community cards, and the showdown.
     """
 
@@ -42,6 +42,8 @@ class Game:
         self.small_blind = 10
         self.big_blind = 20
         self.dealer_position = 0  # Track the dealer position
+        self.small_blind_position = (self.dealer_position + 1) % len(self.players)
+        self.big_blind_position = (self.dealer_position + 2) % len(self.players)
         self.current_betting_round = None  # Stores the current betting round
         self.hand_number = 0  # Keeps track of how many hands have been played
 
@@ -102,14 +104,14 @@ class Game:
         """
         Assigns the small and big blinds.
         """
-        small_blind_player = self.players[(self.dealer_position + 1) % len(self.players)]
-        big_blind_player = self.players[(self.dealer_position + 2) % len(self.players)]
+        self.small_blind_player = self.players[(self.dealer_position + 1) % len(self.players)]
+        self.big_blind_player = self.players[(self.dealer_position + 2) % len(self.players)]
 
-        small_blind_player.place_bet(self.small_blind)
-        big_blind_player.place_bet(self.big_blind)
+        self.small_blind_player.place_bet(self.small_blind)
+        self.big_blind_player.place_bet(self.big_blind)
 
         self.pot += self.small_blind + self.big_blind
-        print(f"\nBlinds: {small_blind_player.name} posts {self.small_blind}, {big_blind_player.name} posts {self.big_blind}")
+        print(f"\nBlinds: {self.small_blind_player.name} posts {self.small_blind}, {self.big_blind_player.name} posts {self.big_blind}")
 
     def deal_hole_cards(self):
         """
@@ -144,7 +146,9 @@ class Game:
         self.current_betting_round = BettingRound(
             players=self.players, 
             pot=self.pot, 
-            dealer_position=self.dealer_position, 
+            dealer_position=self.dealer_position,
+            sb_position=self.small_blind_position,
+            bb_position=self.big_blind_position,
             small_blind=self.small_blind,
             preflop=preflop,
         )
@@ -178,12 +182,13 @@ class Game:
         """
         Handles side pots for players who are all-in with different stack sizes.
         """
-        all_bets = sorted(set(p.current_bet for p in self.players if p.current_bet > 0))
+        all_bets = sorted(set(p.current_hand_bet for p in self.players if p.current_hand_bet > 0))
         side_pots = []
         previous_bet = 0
-        
+        print([(p.name, p.current_hand_bet) for p in self.players])
+        print("all_bets: ", all_bets)
         for bet in all_bets:
-            involved_players = [p for p in self.players if p.current_bet >= bet]
+            involved_players = [p for p in self.players if p.current_hand_bet >= bet]
             side_pot = (bet - previous_bet) * len(involved_players)
             side_pots.append((side_pot, involved_players))
             previous_bet = bet
@@ -192,28 +197,68 @@ class Game:
 
     def showdown(self):
         """
-        Determines the winner(s) and distributes the pot.
+        Determines the winner(s) and distributes the pot(s).
+        Creates side pots when players are all-in and others continue betting.
         """
         print("\n--- Showdown ---")
-        # active_players = [(p.name, p.hole_cards) for p in self.players if not p.folded]
         
-        # if len(active_players) == 1:
-        #     # Only one player left, they win the whole pot
-        #     winner = active_players[0][0]
-        #     self.players[winner].stack += self.pot
-        #     print(f"{winner} wins the pot of {self.pot} chips!")
-        #     return
+        active_players = [p for p in self.players if not p.folded]
+        for p in active_players:
+            print(f"{p.name}: {p.hole_cards}")
 
-        side_pots = self.calculate_side_pots()
-        for pot, involved_players in side_pots:
-            winners = HandEvaluator.compare_hands([(p.name, p.hole_cards) for p in involved_players], self.community_cards)
-            split_pot = pot // len(winners)
-            
+        if len(active_players) == 1:
+            winner = active_players[0]
+            winner.stack += self.pot
+            print(f"{winner.name} wins {self.pot} chips!")
+            self.pot = 0
+            return
+
+        # Sort all bets (including partial all-in bets) to create correct pot levels
+        all_bets = sorted(set(p.current_hand_bet for p in self.players if p.current_hand_bet > 0))
+        previous_amount = 0
+        remaining_pot = self.pot
+
+        for bet_level in all_bets:
+            # Calculate pot for this level
+            current_pot = 0
+            # For each player who bet something in this level
             for player in self.players:
-                if player.name in winners:
-                    player.stack += split_pot
-                    print(f"{player.name} wins {split_pot} chips!")
+                if player.current_hand_bet > previous_amount:
+                    # Their contribution to this level is the minimum of:
+                    # - their total bet
+                    # - the current level amount
+                    # minus what they contributed to previous levels
+                    contribution = min(player.current_hand_bet, bet_level) - previous_amount
+                    current_pot += contribution
 
+            if current_pot > 0:
+                # Players eligible for this pot level are those who:
+                # 1. Haven't folded
+                # 2. Contributed at least up to the previous_amount
+                eligible_players = [p for p in active_players if p.current_hand_bet >= bet_level]
+                
+                if eligible_players:
+                    winners = HandEvaluator.compare_hands(
+                        [(p.name, p.hole_cards) for p in eligible_players],
+                        self.community_cards
+                    )
+                    
+                    split_amount = current_pot // len(winners)
+                    remainder = current_pot % len(winners)
+                    
+                    print(f"\nPot level {bet_level} chips ({current_pot} total):")
+                    for player in self.players:
+                        if player.name in winners:
+                            extra_chip = 1 if remainder > 0 else 0
+                            remainder -= 1
+                            winning_amount = split_amount + extra_chip
+                            player.stack += winning_amount
+                            print(f"{player.name} wins {winning_amount} chips!")
+                    
+                    remaining_pot -= current_pot
+            
+            previous_amount = bet_level
+        
         self.pot = 0
 
 
