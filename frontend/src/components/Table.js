@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchGameState } from "../api";
+import { fetchGameState, startNextHand } from "../api";
 import Player from "./Player";
 import "./Table.css"; // Import styles for better layout
 
