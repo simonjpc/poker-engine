@@ -14,3 +14,7 @@ export const sendAction = async (player, action, amount = 0) => {
 export const startNextHand = async () => {
     await axios.post(`${API_URL}/next_hand`);
 };
+
+export const startGame = async () => {
+    await axios.post(`${API_URL}/start_game`);
+};

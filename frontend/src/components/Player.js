@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { sendAction } from "../api";
 import "./Player.css";
 
-const Player = ({ player, position }) => {
+const Player = ({ player, position, dealerPosition }) => {
     const [raiseAmount, setRaiseAmount] = useState(50);
 
     // Define positions for the players (adjusted based on your request)
@@ -17,12 +17,15 @@ const Player = ({ player, position }) => {
 
     return (
         <div className="player" style={positions[position]}>
+            {/* Dealer Button */}
+            {position === dealerPosition && <div className="dealer-button">B</div>}
+
             <p>{player.name}</p>
             <p>Stack: {player.stack}</p>
             {player.folded && <p>Folded</p>}
             {player.all_in && <p>All-In!</p>}
 
-            {/* Action buttons */}
+            {/* Player Actions */}
             <div className="player-actions">
                 <button onClick={() => sendAction(player.name, "fold")}>Fold</button>
                 <button onClick={() => sendAction(player.name, "call")}>Call</button>
