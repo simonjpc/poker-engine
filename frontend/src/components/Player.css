@@ -1,0 +1,43 @@
+.player {
+    position: absolute;
+    width: 120px;
+    height: auto;
+    background-color: white;
+    border: 2px solid black;
+    border-radius: 10px;
+    text-align: center;
+    padding: 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.player-actions {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.player-actions button {
+    background-color: #d32f2f;
+    color: white;
+    border: none;
+    padding: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.player-actions button:hover {
+    background-color: #b71c1c;
+}
+
+.raise-input {
+    width: 50px;
+    text-align: center;
+    border: 1px solid gray;
+    border-radius: 4px;
+    padding: 3px;
+    font-size: 12px;
+}
