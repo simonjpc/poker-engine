@@ -18,7 +18,8 @@ def get_game_state():
         "players": [{"name": p.name, "stack": p.stack, "folded": p.folded, "all_in": p.all_in} for p in poker_game.players],
         "community_cards": poker_game.community_cards,
         "pot": poker_game.pot,
-        "current_hand": poker_game.hand_number
+        "current_hand": poker_game.hand_number,
+        "dealer_position": poker_game.dealer_position
     }
     return jsonify(game_state)
 
