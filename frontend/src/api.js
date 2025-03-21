@@ -2,6 +2,10 @@ import axios from 'axios';
 
 const API_URL = "http://127.0.0.1:5000";
 
+export const startGame = async () => {
+    await axios.post(`${API_URL}/start_game`);
+};
+
 export const fetchGameState = async () => {
     const response = await axios.get(`${API_URL}/game_state`);
     return response.data;
@@ -13,8 +17,4 @@ export const sendAction = async (player, action, amount = 0) => {
 
 export const startNextHand = async () => {
     await axios.post(`${API_URL}/next_hand`);
-};
-
-export const startGame = async () => {
-    await axios.post(`${API_URL}/start_game`);
 };
