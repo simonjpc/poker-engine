@@ -26,6 +26,9 @@ class BettingRound:
         self.preflop = preflop
         self.small_blind = small_blind
 
+        self.current_index = 0
+        self.current_player = None
+
         # Determine correct betting order
         self.betting_order = self.determine_betting_order()
 
@@ -69,7 +72,7 @@ class BettingRound:
             return
 
         # Handle all-in situations
-        if amount < current_bet:
+        if amount < current_bet - player.current_bet:
             if amount == player.stack:  # Player is going all-in with less than the call amount
                 print(f"{player.name} goes all-in with {amount} chips!")
                 player.place_bet(amount)
@@ -87,9 +90,9 @@ class BettingRound:
         self.pot += bet_amount  # Add to the pot
 
         # If this bet is a raise, update the highest bet
-        if bet_amount > self.current_bet:
-            self.current_bet = bet_amount
-            self.last_raiser = player  # Track the last raiser
+        if player.current_bet > self.current_bet:
+            self.current_bet = player.current_bet
+            self.last_raiser = player
 
 
     def process_actions(self):
@@ -108,11 +111,15 @@ class BettingRound:
                     continue
 
                 valid_actions = self.get_valid_actions(player)
+                print("valid_actions: ", valid_actions)
                 if valid_actions is None:  # Player has no chips
                     continue
 
                 action, amount = player.make_decision(valid_actions)
-
+                self.current_index += 1
+                if self.current_index >= len(self.betting_order) and action_taken:
+                    self.current_index = 0
+                
                 if action == "fold":
                     player.fold_hand()
                 elif action == "call":
@@ -123,11 +130,13 @@ class BettingRound:
                     last_raiser = i
 
             # Stop when no raises have occurred
+            print("action_taken: ", action_taken)
             if not action_taken:
                 break  # Betting round ends
 
         for player in self.players:
             player.current_bet = 0
+
 
     def find_first_active_player_postflop(self):
         """
@@ -197,7 +206,28 @@ class BettingRound:
         """
         return f"Pot: {self.pot} | Current Bet: {self.current_bet} | Last Raiser: {self.last_raiser.name if self.last_raiser else 'None'}"
 
+    def get_active_player(self):
+        """
+        Returns the name of the player whose turn it is to act.
+        """
+        print("self.current_index: ", self.current_index)
+        while self.current_index < len(self.betting_order):
+            player = self.betting_order[self.current_index]
+            if not player.folded and not player.all_in and player.stack > 0:
+                return player.name
+            self.current_index += 1  # Skip ineligible players
 
+        return None  # No one left to act
+    
+    def perform_action(self, player, action, amount):
+        if action == "fold":
+            player.fold_hand()
+        elif action in ["call", "raise"]:
+            self.place_bet(player, amount)
+
+        # Move to the next player
+        self.current_index += 1
+    
 if __name__ == "__name__":
 
     # Create players
