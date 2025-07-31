@@ -16,6 +16,9 @@ class Player:
         self.folded = False             # Whether the player has folded
         self.all_in = False             # Whether the player is all-in
 
+        self.pending_action = None  # For frontend interaction
+        self.waiting_for_action = False
+
     def receive_cards(self, cards: list):
         """
         Assigns hole cards to the player.
@@ -24,7 +27,7 @@ class Player:
         """
         self.hole_cards = cards
 
-    def make_decision(self, valid_actions, ai_model=None):
+    def make_decision_terminal(self, valid_actions, ai_model=None):
         """
         Returns an action based on available options.
         Supports AI-based decisions if an AI model is provided.
@@ -51,6 +54,20 @@ class Player:
                 else:
                     return action, valid_actions.get(action, None)
             print("Invalid action. Try again.")
+
+    def make_decision(self, valid_actions, ai_model=False):
+
+        if ai_model:
+            return ai_model.choose_action(valid_actions)  # AI chooses the best action
+        
+        self.waiting_for_action = True
+        print(f"⏳ Waiting for frontend to provide action for {self.name}")
+        while self.pending_action is None:
+            1
+        self.waiting_for_action = False
+        action_and_amount = self.pending_action
+        self.pending_action = None
+        return action_and_amount
 
 
     def place_bet(self, amount: int):

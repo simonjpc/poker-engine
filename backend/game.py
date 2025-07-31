@@ -9,14 +9,15 @@ class Game:
     Handles player actions, betting rounds, community cards, and the showdown.
     """
 
-    def __init__(self, players, starting_stack):
+    def __init__(self, players, starting_stacks):
         """
         Initializes a new poker game.
 
         :param players: List of player names.
         :param starting_stack: The amount of chips each player starts with.
         """
-        self.players = [Player(name, starting_stack, i) for i, name in enumerate(players)]
+        self.players = [Player(name, stack, i) for i, (name, stack) in enumerate(zip(players, starting_stacks))]
+        self.current_bet = max(p.current_bet for p in self.players) if self.players else 0
         self.deck = Deck()  # Create a deck instance
         self.community_cards = []  # Store community cards
         self.pot = 0  # Main pot
@@ -134,7 +135,7 @@ class Game:
             preflop=preflop,
         )
 
-        self.current_betting_round.process_actions()
+        self.current_betting_round.process_actions() # <- line not needed for frontend, but needed if playing with terminal
         self.pot = self.current_betting_round.pot  # Update the total pot
 
     def hand_continues(self):
