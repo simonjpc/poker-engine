@@ -2,7 +2,7 @@
     position: absolute;
     width: 120px;
     height: auto;
-    background-color: white;
+    background-color: gray;
     border: 2px solid black;
     border-radius: 10px;
     text-align: center;
@@ -58,3 +58,8 @@
     align-items: center;
     justify-content: center;
 }
+
+.player.active-player {
+    border: 2px solid yellow;
+    box-shadow: 0 0 10px yellow;
+  }
