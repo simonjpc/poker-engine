@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { sendAction } from "../api";
 import "./Player.css";
 
@@ -27,9 +27,7 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
         onUpdate(player.id, { available: !player.available });
     };
 
-    const [validActions, setValidActions] = useState({});
     const [raiseAmount, setRaiseAmount] = useState("");
-    const [callAmount, setCallAmount] = useState(0);
 
     // Define positions for the players (adjusted based on your request)
     const positions = [
