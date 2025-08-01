@@ -25,7 +25,7 @@ def get_game_state():
             active_player_name = game_instance.current_betting_round.get_active_player()
         if game_instance is not None:
             game_state = {
-                "players": [{"name": p.name, "stack": p.stack, "folded": p.folded, "all_in": p.all_in, "current_bet": p.current_bet} for p in game_instance.players],
+                "players": [{"name": p.name, "stack": p.stack, "hole_cards": p.hole_cards, "folded": p.folded, "all_in": p.all_in, "current_bet": p.current_bet} for p in game_instance.players],
                 "community_cards": game_instance.community_cards,
                 "pot": game_instance.pot,
                 "current_hand": game_instance.hand_number,
@@ -112,29 +112,6 @@ def start_game():
     threading.Thread(target=run_game).start()
     return jsonify({"message": "Game started"})
 
-@app.route("/state", methods=["GET"])
-def game_state():
-    print("/state endpoint was hit")
-    if not game_instance:
-        return jsonify({"error": "Game not started"}), 400
-
-    players = []
-    for p in game_instance.players:
-        players.append({
-            "name": p.name,
-            "stack": p.stack,
-            "current_bet": p.current_bet,
-            "folded": p.folded,
-            "all_in": p.all_in,
-        })
-
-    highest_bet = max((p["current_bet"] for p in players), default=0)
-
-    return jsonify({
-        "players": players,
-        "highest_bet": highest_bet
-    })
-
 @app.route("/reset", methods=["POST"])
 def reset_game():
     """
@@ -147,5 +124,4 @@ def reset_game():
     return jsonify({"message": "Game reset successful"})
 
 if __name__ == '__main__':
-    # app.run(debug=True)
     app.run(host="0.0.0.0", port=4000, debug=True)
