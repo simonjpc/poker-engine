@@ -2,14 +2,30 @@ import React, { useState, useEffect } from "react";
 import { sendAction } from "../api";
 import "./Player.css";
 
-export default function Player({ player, onUpdate, disabled, position, dealerPosition, highestBet, active, currentStack, currentBet, isFolded, isAllIn }) {
+export default function Player({ player, onUpdate, disabled, position, dealerPosition, highestBet, active, currentStack, currentBet, isFolded, isAllIn, HoleCards }) {
     const handleAmountChange = (e) => {
-        onUpdate(player.id, { amount: parseInt(e.target.value) || 0 });
-      };
+        const value = e.target.value;
+      
+        // Allow empty string while typing
+        if (value === "") {
+            onUpdate(player.id, { amount: "" });
+        } else {
+            const parsed = parseInt(value);
+            if (!isNaN(parsed)) {
+                onUpdate(player.id, { amount: parsed });
+           }
+        }
+    };
     
-      const handleToggleAvailable = () => {
+    const handleAmountBlur = () => {
+        if (player.amount === "") {
+           onUpdate(player.id, { amount: 0 });
+        }
+    };
+
+    const handleToggleAvailable = () => {
         onUpdate(player.id, { available: !player.available });
-      };
+    };
 
     const [validActions, setValidActions] = useState({});
     const [raiseAmount, setRaiseAmount] = useState("");
@@ -30,29 +46,41 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
 
     return (
         <div className={`player ${active ? "active-player" : ""}`} style={positions[position]}>
-            <div className="player-header">
+            <div className="hole-cards-and-button">
+                <div className="hole-cards">
+                    {(HoleCards?.length > 0 ? HoleCards : [" ", " "]).map((card, index) => (
+                        <span key={index} className="card">{card}</span>
+                    ))}
+                </div>
+                {position === dealerPosition && <div className="dealer-button">B</div>}
+            </div>
+                <div className="player-header">
             <strong>{player.name}</strong>
             </div>
             <div className="player-body">
-            <label>
-                Amount:
-                <input
-                type="number"
-                value={player.amount}
-                onChange={handleAmountChange}
-                />
-            </label>
-            <label>
-                <input
-                type="checkbox"
-                checked={player.available}
-                onChange={handleToggleAvailable}
-                />
-                Available
-            </label>
+                <div className="player-amount-row">
+                    <label>
+                        Amount:
+                        <input
+                            type="number"
+                            className="amount-input"
+                            value={player.amount}
+                            onChange={handleAmountChange}
+                            onBlur={handleAmountBlur}
+                            style={{ width: "60px" }}
+                        />
+                    </label>
+                </div>
+                <label onClick={(e) => e.stopPropagation()}>
+                    <input
+                        type="checkbox"
+                        checked={player.available}
+                        onChange={handleToggleAvailable}
+                        style={{ width: "30px", height: "30px" }}
+                    />
+                    Available
+                </label>
             </div>
-            {/* Dealer Button */}
-            {position === dealerPosition && <div className="dealer-button">B</div>}
 
             <p>Stack: {currentStack}</p>
             <p>In Pot: {currentBet}</p>
@@ -61,17 +89,26 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
 
             {/* Player Actions */}
             <div className="player-actions">
-                <button onClick={() => sendAction(player.name, "fold")}>Fold</button>
-                <button onClick={() => sendAction(player.name, "call", amountToCall)}>
-                    {amountToCall > 0 ? `call ${amountToCall}` : "check"}
-                </button>
-                <input
-                    type="number"
-                    value={raiseAmount}
-                    onChange={(e) => setRaiseAmount(e.target.value)}
-                    className="raise-input"
-                />
-                <button onClick={() => sendAction(player.name, "raise", raiseAmount)}>Raise</button>
+                <div className="action-row">
+                    <button onClick={(e) => { e.stopPropagation(); sendAction(player.name, "fold"); }}>
+                        Fold
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); sendAction(player.name, "call", amountToCall); }}>
+                        {amountToCall > 0 ? `Call ${amountToCall}` : "Call"}
+                    </button>
+                </div>
+                <div className="action-row">
+                    <input
+                        type="number"
+                        value={raiseAmount}
+                        onChange={(e) => setRaiseAmount(e.target.value)}
+                        className="raise-input"
+                        onClick={(e) => e.stopPropagation()} // in case someone clicks in the input
+                    />
+                    <button onClick={(e) => { e.stopPropagation(); sendAction(player.name, "raise", raiseAmount); }}>
+                        Raise
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -4,14 +4,26 @@ import "./Table.css"; // Import styles for better layout
 export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerId, onSetButton, highestBet, playerBets, activePlayer }) {
     const radius = 250; // Radius of the circle
     const centerX = 420;
-    const centerY = 100;
-    const totalPlayers = players.length;
+    const centerY = 120;
+
+    const angleMap = {
+        0: -40,
+        1: 40,
+        2: 90, // You
+        3: 140,
+        4: 220,
+        5: 270 
+    };
+
     return (
         <div className="table-container">
           {players.map((player, index) => {
-            const angle = (2 * Math.PI * index) / totalPlayers;
-            const x = centerX + 1.6 * radius * Math.cos(angle);
-            const y = centerY + radius * Math.sin(angle);
+
+            const angleInDegrees = angleMap[index];
+            const angleInRadians = (angleInDegrees * Math.PI) / 180;
+
+            const x = centerX + 2 * radius * Math.cos(angleInRadians);
+            const y = centerY + 1.02 * radius * Math.sin(angleInRadians);
 
             // Match player by name from /state
             console.log("Frontend Player Mapping:");
@@ -25,26 +37,27 @@ export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerI
             
             return (
                 <div
-                // key={player.id}
-                className={`table-seat ${buttonPlayerId === player.id ? "button-seat" : ""}`}
-                style={{ top: `${y}px`, left: `${x}px` }}
-                onClick={() => !disabled && onSetButton(player.id)}
+                    className="table-seat"
+                    style={{ top: `${y}px`, left: `${x}px` }}
+                    onClick={() => !disabled && onSetButton(player.id)}
                 >
-                <Player
-                player={player}
-                onUpdate={onUpdatePlayer}
-                disabled={disabled || player.name !== activePlayer} 
-                position={index}
-                dealerPosition={buttonPlayerId}
-                highestBet={highestBet}
-                active={player.name === activePlayer}
-                currentStack={liveState?.stack}
-                currentBet={liveState?.current_bet}
-                isFolded={liveState?.folded ?? false}
-                isAllIn={liveState?.all_in ?? false}
-                />
-                {buttonPlayerId === player.id && <div className="dealer-button">D</div>}
-              </div>
+                    <div className="player-wrapper">
+                        <Player
+                            player={player}
+                            onUpdate={onUpdatePlayer}
+                            disabled={disabled || player.name !== activePlayer} 
+                            position={index}
+                            dealerPosition={buttonPlayerId}
+                            highestBet={highestBet}
+                            active={player.name === activePlayer}
+                            currentStack={liveState?.stack}
+                            currentBet={liveState?.current_bet}
+                            isFolded={liveState?.folded ?? false}
+                            isAllIn={liveState?.all_in ?? false}
+                            HoleCards={liveState?.hole_cards || []}
+                        />
+                    </div>
+                </div>
             );
           })}
         </div>
