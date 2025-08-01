@@ -14,7 +14,8 @@ class Deck:
         
         :return: List of cards in the format "RankSuit" (e.g., "As", "Td").
         """
-        suits = ['s', 'h', 'd', 'c']  # Spades, Hearts, Diamonds, Clubs
+        # suits = ['s', 'h', 'd', 'c']  # Spades, Hearts, Diamonds, Clubs
+        suits = ['♠', '♥', '♦', '♣']  # Spades, Hearts, Diamonds, Clubs
         ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
         return [rank + suit for suit in suits for rank in ranks]
 
