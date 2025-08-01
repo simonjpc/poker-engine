@@ -4,12 +4,12 @@ import { sendGameConfig, startGame, fetchGameState, resetGame } from "./api";
 import "./App.css";
 
 const INITIAL_PLAYERS = [
-  { id: 0, name: "Anne", amount: 1000, available: true },
-  { id: 1, name: "Benoît", amount: 1000, available: true },
-  { id: 2, name: "Claire", amount: 1000, available: true },
-  { id: 3, name: "Denis", amount: 1000, available: true },
-  { id: 4, name: "Elodie", amount: 1000, available: true },
-  { id: 5, name: "François", amount: 1000, available: true },
+  { id: 0, name: "Anne", amount: 20000, available: true },
+  { id: 1, name: "Benoît", amount: 20000, available: true },
+  { id: 2, name: "You", amount: 20000, available: true }, // This is the player controlled by the user
+  { id: 3, name: "Denis", amount: 20000, available: true },
+  { id: 4, name: "Elodie", amount: 20000, available: true },
+  { id: 5, name: "François", amount: 20000, available: true },
 ];
 
 function App() {
