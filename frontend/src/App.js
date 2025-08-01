@@ -75,7 +75,7 @@ function App() {
 
   return (
     <div className="App">
-      <h1 className="title">Poker Table</h1>
+      {/* <h1 className="title">Poker Table</h1> */}
       <Table
         players={players}
         onUpdatePlayer={handleUpdatePlayer}

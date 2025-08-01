@@ -84,8 +84,13 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
 
             <p>Stack: {currentStack}</p>
             <p>In Pot: {currentBet}</p>
-            {isFolded && <p>Folded</p>}
-            {isAllIn && <p>All-In!</p>}
+            {/* {isFolded && <p>Folded</p>}
+            {isAllIn && <p>All-In!</p>} */}
+            {(isFolded || isAllIn) && (
+                <div className="status-badge">
+                    {isFolded ? "Folded" : "All-In!"}
+                </div>
+            )}
 
             {/* Player Actions */}
             <div className="player-actions">

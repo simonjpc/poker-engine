@@ -120,3 +120,19 @@
 .amount-input {
     width: 100px; /* or 60px depending on design */
 }
+
+.status-badge {
+    position: absolute;
+    top: -10px;
+    left: -40%;
+    margin-left: 8px;
+    background-color: black;
+    color: white;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 5px;
+    white-space: nowrap;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}

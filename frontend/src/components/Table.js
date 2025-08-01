@@ -7,11 +7,11 @@ export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerI
     const centerY = 120;
 
     const angleMap = {
-        0: -40,
-        1: 40,
+        0: -35,
+        1: 35,
         2: 90, // You
-        3: 140,
-        4: 220,
+        3: 145,
+        4: 215,
         5: 270 
     };
 
@@ -22,8 +22,16 @@ export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerI
             const angleInDegrees = angleMap[index];
             const angleInRadians = (angleInDegrees * Math.PI) / 180;
 
-            const x = centerX + 2 * radius * Math.cos(angleInRadians);
-            const y = centerY + 1.02 * radius * Math.sin(angleInRadians);
+            const x = centerX + 2.2 * radius * Math.cos(angleInRadians);
+            // const y = centerY + 1.02 * radius * Math.sin(angleInRadians);
+            let y = centerY + 1.02 * radius * Math.sin(angleInRadians);
+
+            // Nudge top-most (index 0) and bottom-most (index 3) players vertically
+            if (index === 5) {
+                y += 30; // Move top-most player down
+            } else if (index === 2) {
+                y -= 30; // Move bottom-most player up
+            }
 
             // Match player by name from /state
             console.log("Frontend Player Mapping:");
