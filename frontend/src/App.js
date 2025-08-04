@@ -20,9 +20,7 @@ function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [activePlayer, setActivePlayer] = useState(null);
   const [resetSignal, setResetSignal] = useState(false);
-
-  const [card1, setCard1] = useState({ rank: "", suit: "" });
-  const [card2, setCard2] = useState({ rank: "", suit: "" });
+  const [cardInput, setCardInput] = useState("");  // 4-letter string
 
   useEffect(() => {
     if (gameStarted) {
@@ -42,17 +40,43 @@ function App() {
     );
   };
 
-  const youHoleCards = (card1.rank && card1.suit && card2.rank && card2.suit)
-    ? [`${card1.rank}${card1.suit}`, `${card2.rank}${card2.suit}`]
-    : null;
-
   const handleStartGame = async () => {
+
+    const parseHoleCards = (input) => {
+    const validSuits = ["s", "h", "d", "c"];
+    const validRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "t", "j", "q", "k", "a"];
+    if (input.length === 4) {
+      const r1 = input[0].toUpperCase();
+      const s1 = input[1];
+      const r2 = input[2].toUpperCase();
+      const s2 = input[3];
+      if (validRanks.includes(input[0]) && validSuits.includes(s1) &&
+          validRanks.includes(input[2]) && validSuits.includes(s2)) {
+        return [`${r1}${convertSuit(s1)}`, `${r2}${convertSuit(s2)}`];
+      }
+    }
+    return null;
+  };
+
+
+  const convertSuit = (suit) => {
+    switch (suit) {
+      case "s": return "♠";
+      case "h": return "♥";
+      case "d": return "♦";
+      case "c": return "♣";
+      default: return suit;
+    }
+  };
+
+  const parsedCards = parseHoleCards(cardInput);
+
     const config = {
       players: players.map((p) => ({
         name: p.name,
         amount: p.amount,
         available: p.available,
-        selectedHoleCards: p.name === "You" ? youHoleCards : null,
+        selectedHoleCards: p.name === "You" ? parsedCards : null,
       })),
       button_player_index: buttonPlayerId,
     };
@@ -76,14 +100,13 @@ function App() {
     await resetGame();
   
     // Reset frontend state
+    setCardInput("");
     setGameStarted(false);
     setGameState(null);
     setActivePlayer(null);
     setPlayers(INITIAL_PLAYERS);
     setButtonPlayerId(0);
     setResetSignal(prev => !prev);
-    setCard1({ rank: "", suit: "" });  // 🔁 reset selected cards
-    setCard2({ rank: "", suit: "" });
   };
 
   return (
@@ -113,10 +136,8 @@ function App() {
         Reset Game
       </button>
       {!gameStarted && (<HoleCardSelector
-          card1={card1}
-          card2={card2}
-          setCard1={setCard1}
-          setCard2={setCard2}
+          cardInput={cardInput}
+          setCardInput={setCardInput}
           disabled={gameStarted}
       />)}
     </div>
