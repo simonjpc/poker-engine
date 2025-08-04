@@ -1,0 +1,36 @@
+.hole-card-selector {
+    position: fixed;
+    top: 460px;
+    right: 500px;
+    background: #f5f7fa;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 0.9rem;
+  }
+  
+  .card-select-group {
+    margin-top: 20px;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 8px;
+  }
+  
+  .card-select-group select {
+    padding: 4px;
+    font-size: 0.9rem;
+  }
+  
+  .selected-preview {
+    margin-top: 5px;
+    font-weight: bold;
+  }
+  
+  .card-preview {
+    display: inline-block;
+    margin-right: 5px;
+    font-size: 1.1rem;
+  }
+  
