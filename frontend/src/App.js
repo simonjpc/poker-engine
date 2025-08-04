@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Table from "./components/Table";
+import HoleCardSelector from "./components/HoleCardSelector";
 import { sendGameConfig, startGame, fetchGameState, resetGame } from "./api";
 import "./App.css";
 
@@ -18,6 +19,10 @@ function App() {
   const [buttonPlayerId, setButtonPlayerId] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [activePlayer, setActivePlayer] = useState(null);
+  const [resetSignal, setResetSignal] = useState(false);
+
+  const [card1, setCard1] = useState({ rank: "", suit: "" });
+  const [card2, setCard2] = useState({ rank: "", suit: "" });
 
   useEffect(() => {
     if (gameStarted) {
@@ -37,12 +42,17 @@ function App() {
     );
   };
 
+  const youHoleCards = (card1.rank && card1.suit && card2.rank && card2.suit)
+    ? [`${card1.rank}${card1.suit}`, `${card2.rank}${card2.suit}`]
+    : null;
+
   const handleStartGame = async () => {
     const config = {
       players: players.map((p) => ({
         name: p.name,
         amount: p.amount,
         available: p.available,
+        selectedHoleCards: p.name === "You" ? youHoleCards : null,
       })),
       button_player_index: buttonPlayerId,
     };
@@ -71,34 +81,44 @@ function App() {
     setActivePlayer(null);
     setPlayers(INITIAL_PLAYERS);
     setButtonPlayerId(0);
+    setResetSignal(prev => !prev);
+    setCard1({ rank: "", suit: "" });  // 🔁 reset selected cards
+    setCard2({ rank: "", suit: "" });
   };
 
   return (
     <div className="App">
-      {/* <h1 className="title">Poker Table</h1> */}
       <Table
-        players={players}
-        onUpdatePlayer={handleUpdatePlayer}
-        disabled={gameStarted}
-        buttonPlayerId={buttonPlayerId}
-        onSetButton={setButtonPlayerId}
-        highestBet={gameState?.highest_bet || 0}
-        playerBets={gameState?.players || []}
-        activePlayer={activePlayer}
+          players={players}
+          onUpdatePlayer={handleUpdatePlayer}
+          disabled={gameStarted}
+          buttonPlayerId={buttonPlayerId}
+          onSetButton={setButtonPlayerId}
+          highestBet={gameState?.highest_bet || 0}
+          playerBets={gameState?.players || []}
+          activePlayer={activePlayer}
+          resetSignal={resetSignal}
       />
       <button
-        className="start-button"
-        onClick={handleStartGame}
-        disabled={gameStarted}
+          className="start-button"
+          onClick={handleStartGame}
+          disabled={gameStarted}
       >
         Start Game
       </button>
       <button
-        className="reset-button"
-        onClick={handleResetGame}
+          className="reset-button"
+          onClick={handleResetGame}
       >
         Reset Game
       </button>
+      {!gameStarted && (<HoleCardSelector
+          card1={card1}
+          card2={card2}
+          setCard1={setCard1}
+          setCard2={setCard2}
+          disabled={gameStarted}
+      />)}
     </div>
   );
 }

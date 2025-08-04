@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from game import Game
+from assistant import  determine_position, classify_hand, determine_action
 import threading
 
 app = Flask(__name__)
@@ -9,9 +10,6 @@ CORS(app, supports_credentials=True)
 game_instance = None
 config_locked = False
 
-# Initialize the game with 6 players
-# players = ["Anne", "Benoît", "Claire", "Denis", "Elodie", "François"]
-# poker_game = Game(players, starting_stacks=[1000] * len(players))
 
 @app.route('/game_state', methods=['GET'])
 def get_game_state():
@@ -25,7 +23,17 @@ def get_game_state():
             active_player_name = game_instance.current_betting_round.get_active_player()
         if game_instance is not None:
             game_state = {
-                "players": [{"name": p.name, "stack": p.stack, "hole_cards": p.hole_cards, "folded": p.folded, "all_in": p.all_in, "current_bet": p.current_bet} for p in game_instance.players],
+                "players": [
+                    {
+                        "name": p.name,
+                        "stack": p.stack,
+                        "hole_cards": p.hole_cards,
+                        "folded": p.folded,
+                        "all_in": p.all_in,
+                        "current_bet": p.current_bet,
+                        "selectedHoleCards": p.selected_hole_cards,
+                    } for p in game_instance.players
+                ],
                 "community_cards": game_instance.community_cards,
                 "pot": game_instance.pot,
                 "current_hand": game_instance.hand_number,
@@ -81,13 +89,18 @@ def configure_game():
     button_index = data.get("button_player_index", 0)
 
     # Filter out unavailable players
-    active_players = [
-        (p["name"], p["amount"]) for i, p in enumerate(players_config) if p["available"]
-    ]
+    active_players = []
+    manual_holecards = {}
+
+    for i, p in enumerate(players_config):
+        if p["available"]:
+            active_players.append((p["name"], p["amount"]))
+            if p.get("selectedHoleCards") and p["name"].lower() == "you":
+                manual_holecards["you"] = p["selectedHoleCards"]
 
     names = [p[0] for p in active_players]
     stacks = [p[1] for p in active_players]
-    game_instance = Game(players=names, starting_stacks=stacks)
+    game_instance = Game(players=names, starting_stacks=stacks, manual_holecards=manual_holecards)
     print("✅ Game instance created.")
     game_instance.dealer_position = button_index
 
@@ -111,6 +124,43 @@ def start_game():
     print("✅ Starting game...")
     threading.Thread(target=run_game).start()
     return jsonify({"message": "Game started"})
+
+@app.route('/recommend_action', methods=['POST'])
+def recommend_action():
+    """
+    Recommends an action based on position, hole cards, and betting history.
+    Only for the player named "You".
+    """
+    if not game_instance or not game_instance.current_betting_round:
+        return jsonify({"error": "Game not active"}), 400
+
+    player = next((p for p in game_instance.players if p.name.lower() == "you"), None)
+    if not player or player.folded or player.all_in:
+        return jsonify({"error": "Player not available for recommendation"}), 400
+
+    position_index = (player.position - game_instance.dealer_position) % len(game_instance.players)
+    position_name = determine_position(position_index, len(game_instance.players))
+
+    hand_code = classify_hand(player.hole_cards)
+
+    preflop = game_instance.current_betting_round.preflop
+    has_raiser = any(p.current_bet > game_instance.big_blind for p in game_instance.players if p.name != player.name)
+
+    action, amount = determine_action(
+        position=position_name,
+        hand=hand_code,
+        has_raiser=has_raiser,
+        is_first_to_act=not has_raiser,
+        num_limpers=sum(1 for p in game_instance.players if p.current_bet == game_instance.big_blind and p.name != player.name),
+        bb_value=game_instance.big_blind
+    )
+
+    return jsonify({
+        "position": position_name,
+        "hand": hand_code,
+        "recommendation": action,
+        "amount": amount
+    })
 
 @app.route("/reset", methods=["POST"])
 def reset_game():

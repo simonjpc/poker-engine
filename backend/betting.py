@@ -68,13 +68,15 @@ class BettingRound:
 
         # Allow Big Blind to check if no one raised
         if player.position == self.bb_position and amount == 0 and current_bet <= 0:
-            print(f"{player.name} checks (Big Blind).")
+            check_checks = "checks" if player.name.lower() != "you" else "check"
+            print(f"{player.name} {check_checks} (Big Blind).")
             return
 
         # Handle all-in situations
         if amount < current_bet - player.current_bet:
             if amount == player.stack:  # Player is going all-in with less than the call amount
-                print(f"{player.name} goes all-in with {amount} chips!")
+                go_goes = "goes" if player.name.lower() != "you" else "go"
+                print(f"{player.name} {go_goes} all-in with {amount} chips!")
                 player.place_bet(amount)
                 self.active_bets[player] += amount
                 self.pot += amount
@@ -117,8 +119,6 @@ class BettingRound:
 
                 action, amount = player.make_decision(valid_actions)
                 self.current_index += 1
-                if self.current_index >= len(self.betting_order) and action_taken:
-                    self.current_index = 0
                 
                 if action == "fold":
                     player.fold_hand()
@@ -129,8 +129,10 @@ class BettingRound:
                     action_taken = True  # Raise occurred, everyone gets another chance
                     last_raiser = i
 
+                if self.current_index >= len(self.betting_order) and action_taken:
+                    self.current_index = 0
+
             # Stop when no raises have occurred
-            print("action_taken: ", action_taken)
             if not action_taken:
                 break  # Betting round ends
 

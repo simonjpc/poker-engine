@@ -1,7 +1,7 @@
 import Player from "./Player";
 import "./Table.css"; // Import styles for better layout
 
-export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerId, onSetButton, highestBet, playerBets, activePlayer }) {
+export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerId, onSetButton, highestBet, playerBets, activePlayer, resetSignal }) {
     const radius = 250; // Radius of the circle
     const centerX = 420;
     const centerY = 120;
@@ -28,9 +28,9 @@ export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerI
 
             // Nudge top-most (index 0) and bottom-most (index 3) players vertically
             if (index === 5) {
-                y += 30; // Move top-most player down
+                y += 40; // Move top-most player down
             } else if (index === 2) {
-                y -= 30; // Move bottom-most player up
+                y -= 40; // Move bottom-most player up
             }
 
             // Match player by name from /state
@@ -45,6 +45,7 @@ export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerI
             
             return (
                 <div
+                    key={player.id}
                     className="table-seat"
                     style={{ top: `${y}px`, left: `${x}px` }}
                     onClick={() => !disabled && onSetButton(player.id)}
@@ -63,6 +64,7 @@ export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerI
                             isFolded={liveState?.folded ?? false}
                             isAllIn={liveState?.all_in ?? false}
                             HoleCards={liveState?.hole_cards || []}
+                            resetSignal={resetSignal}
                         />
                     </div>
                 </div>
