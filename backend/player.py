@@ -15,6 +15,7 @@ class Player:
         self.current_hand_bet = 0
         self.folded = False             # Whether the player has folded
         self.all_in = False             # Whether the player is all-in
+        self.selected_hole_cards = None
 
         self.pending_action = None  # For frontend interaction
         self.waiting_for_action = False
@@ -81,12 +82,14 @@ class Player:
             self.current_hand_bet += self.stack
             self.stack = 0
             self.all_in = True
-            print(f"{self.name} goes all-in with {self.current_bet} chips!")
+            go_goes = "goes" if self.name.lower() != "you" else "go"
+            print(f"{self.name} {go_goes} all-in with {self.current_bet} chips!")
         else:
             self.stack -= amount
             self.current_bet += amount
             self.current_hand_bet += amount
-            print(f"{self.name} bets {amount} chips. Remaining stack: {self.stack}")
+            bet_bets = "bets" if self.name.lower() != "you" else "bet"
+            print(f"{self.name} {bet_bets} {amount} chips. Remaining stack: {self.stack}")
 
     def fold_hand(self):
         """

@@ -9,7 +9,7 @@ class Game:
     Handles player actions, betting rounds, community cards, and the showdown.
     """
 
-    def __init__(self, players, starting_stacks):
+    def __init__(self, players, starting_stacks, manual_holecards=None):
         """
         Initializes a new poker game.
 
@@ -28,6 +28,7 @@ class Game:
         self.big_blind_position = (self.dealer_position + 2) % len(self.players)
         self.current_betting_round = None  # Stores the current betting round
         self.hand_number = 0  # Keeps track of how many hands have been played
+        self.manual_holecards = manual_holecards or {}
 
     def start_game(self, max_hands=10):
         """
@@ -95,7 +96,7 @@ class Game:
         self.pot += self.small_blind + self.big_blind
         print(f"\nBlinds: {self.small_blind_player.name} posts {self.small_blind}, {self.big_blind_player.name} posts {self.big_blind}")
 
-    def deal_hole_cards(self):
+    def deal_hole_cards_old(self):
         """
         Deals two private cards to each active player.
         """
@@ -103,6 +104,19 @@ class Game:
             if not player.folded:
                 player.receive_cards(self.deck.deal(2))
                 print(f"{player.name} receives two hole cards.")
+
+    def deal_hole_cards(self):
+        for player in self.players:
+            if not player.folded:
+                if player.name.lower() == "you" and "you" in self.manual_holecards:
+                    cards = self.manual_holecards["you"]
+                    # Remove selected cards from deck
+                    self.deck.cards = [c for c in self.deck.cards if c not in cards]
+                    player.receive_cards(cards)
+                    print(f"{player.name} receives manually selected hole cards: {cards}")
+                else:
+                    player.receive_cards(self.deck.deal(2))
+                    print(f"{player.name} receives two hole cards.")
 
     def deal_community_cards(self, num_cards, round_name):
         """
