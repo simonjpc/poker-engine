@@ -6,11 +6,11 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
 
     const API_URL = "http://localhost:4000";
 
-    const suits = ["♠", "♥", "♦", "♣"];
-    const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
-    const fullDeck = ranks.flatMap(rank => suits.map(suit => `${rank}${suit}`));
+    // const suits = ["♠", "♥", "♦", "♣"];
+    // const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+    // const fullDeck = ranks.flatMap(rank => suits.map(suit => `${rank}${suit}`));
     
-    const [selectedCards, setSelectedCards] = useState(["", ""]);
+    // const [selectedCards, setSelectedCards] = useState(["", ""]);
     
     const handleAmountChange = (e) => {
         const value = e.target.value;

@@ -21,8 +21,8 @@ class Game:
         self.deck = Deck()  # Create a deck instance
         self.community_cards = []  # Store community cards
         self.pot = 0  # Main pot
-        self.small_blind = 10
-        self.big_blind = 20
+        self.small_blind = 100
+        self.big_blind = 200
         self.dealer_position = 0  # Track the dealer position
         self.small_blind_position = (self.dealer_position + 1) % len(self.players)
         self.big_blind_position = (self.dealer_position + 2) % len(self.players)
