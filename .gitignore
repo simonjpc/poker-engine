@@ -3,3 +3,6 @@ __pycache__/
 
 # old folders
 frontend_old/
+
+# logs
+logs/
