@@ -38,6 +38,7 @@ class BettingRound:
         
         :return: List of players in the correct action sequence.
         """
+        
         if self.preflop:
             # Preflop: Action starts UTG (after big blind)
             first_player = (self.dealer_position + 3) % len(self.players)  # UTG
@@ -50,6 +51,9 @@ class BettingRound:
             order = self.players[first_player:] + self.players[:first_player]
         
         return order
+    
+    
+
 
     def place_bet(self, player, amount):
         """
@@ -136,8 +140,8 @@ class BettingRound:
             if not action_taken:
                 break  # Betting round ends
 
-        for player in self.players:
-            player.current_bet = 0
+        # for player in self.players:
+        #     player.current_bet = 0
 
 
     def find_first_active_player_postflop(self):
@@ -212,7 +216,7 @@ class BettingRound:
         """
         Returns the name of the player whose turn it is to act.
         """
-        print("self.current_index: ", self.current_index)
+        # print("self.current_index: ", self.current_index)
         while self.current_index < len(self.betting_order):
             player = self.betting_order[self.current_index]
             if not player.folded and not player.all_in and player.stack > 0:

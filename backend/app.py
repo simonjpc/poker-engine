@@ -27,7 +27,7 @@ def get_game_state():
                     {
                         "name": p.name,
                         "stack": p.stack,
-                        "hole_cards": p.hole_cards,
+                        "hole_cards": p.hole_cards if p.name.lower() == "you" else ["🂠", "🂠"],
                         "folded": p.folded,
                         "all_in": p.all_in,
                         "current_bet": p.current_bet,
@@ -39,6 +39,7 @@ def get_game_state():
                 "current_hand": game_instance.hand_number,
                 "dealer_position": game_instance.dealer_position,
                 "active_player": active_player_name,
+                "awaiting_flop_input": game_instance.awaiting_flop_input if hasattr(game_instance, "awaiting_flop_input") else False,
             }
     return jsonify(game_state)
 
@@ -97,12 +98,16 @@ def configure_game():
             active_players.append((p["name"], p["amount"]))
             if p.get("selectedHoleCards") and p["name"].lower() == "you":
                 manual_holecards["you"] = p["selectedHoleCards"]
+    
+    dealer_name = players_config[button_index]["name"]
+    dealer_index_mapped = ([ap[0] for ap in active_players]).index(dealer_name)
 
     names = [p[0] for p in active_players]
     stacks = [p[1] for p in active_players]
     game_instance = Game(players=names, starting_stacks=stacks, manual_holecards=manual_holecards)
     print("✅ Game instance created.")
-    game_instance.dealer_position = button_index
+    # game_instance.dealer_position = button_index
+    game_instance.dealer_position = dealer_index_mapped
 
     return jsonify({"message": "Config received"})
 
@@ -141,19 +146,22 @@ def recommend_action():
     position_index = (player.position - game_instance.dealer_position) % len(game_instance.players)
     position_name = determine_position(position_index, len(game_instance.players))
 
-    hand_code = classify_hand(player.hole_cards)
-
     preflop = game_instance.current_betting_round.preflop
-    has_raiser = any(p.current_bet > game_instance.big_blind for p in game_instance.players if p.name != player.name)
+    
+    hand_code, action, amount = None, None, None
+    if len(player.hole_cards):
+        hand_code = classify_hand(player.hole_cards)
 
-    action, amount = determine_action(
-        position=position_name,
-        hand=hand_code,
-        has_raiser=has_raiser,
-        is_first_to_act=not has_raiser,
-        num_limpers=sum(1 for p in game_instance.players if p.current_bet == game_instance.big_blind and p.name != player.name),
-        bb_value=game_instance.big_blind
-    )
+        has_raiser = any(p.current_bet > game_instance.big_blind for p in game_instance.players if p.name != player.name)
+
+        action, amount = determine_action(
+            position=position_name,
+            hand=hand_code,
+            has_raiser=has_raiser,
+            is_first_to_act=not has_raiser,
+            num_limpers=sum(1 for p in game_instance.players if p.current_bet == game_instance.big_blind and p.name != player.name),
+            bb_value=game_instance.big_blind
+        )
 
     return jsonify({
         "position": position_name,
@@ -161,6 +169,33 @@ def recommend_action():
         "recommendation": action,
         "amount": amount
     })
+
+@app.route('/set_flop', methods=['POST'])
+def set_flop():
+    if not game_instance or not game_instance.current_betting_round:
+        return jsonify({"error": "Game not active"}), 400
+
+    data = request.get_json()
+    cards = data.get("flop_cards", [])
+
+    if len(cards) != 3:
+        return jsonify({"error": "Flop must have 3 cards"}), 400
+
+    # Prevent duplicate flop if already dealt
+    if len(game_instance.community_cards) >= 3:
+        return jsonify({"error": "Flop already set"}), 400
+    
+    # Remove from deck
+    game_instance.deck.cards = [c for c in game_instance.deck.cards if c not in cards]
+    game_instance.community_cards.extend(cards)
+    print(f"✅ Flop set to: {cards}")
+
+    game_instance.awaiting_flop_input = False
+
+    # Proceed with the next betting round
+    game_instance.execute_betting_round("Flop")
+
+    return jsonify({"message": "Flop set"})
 
 @app.route("/reset", methods=["POST"])
 def reset_game():

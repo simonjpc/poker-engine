@@ -5,13 +5,7 @@ import "./Player.css";
 export default function Player({ player, onUpdate, disabled, position, dealerPosition, highestBet, active, currentStack, currentBet, isFolded, isAllIn, HoleCards, resetSignal }) {
 
     const API_URL = "http://localhost:4000";
-
-    // const suits = ["♠", "♥", "♦", "♣"];
-    // const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
-    // const fullDeck = ranks.flatMap(rank => suits.map(suit => `${rank}${suit}`));
-    
-    // const [selectedCards, setSelectedCards] = useState(["", ""]);
-    
+      
     const handleAmountChange = (e) => {
         const value = e.target.value;
       
@@ -71,6 +65,36 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
     console.log("Amount to call:", amountToCall);
 
     console.log("player:", player.name, "disabled:", disabled);
+
+    useEffect(() => {
+        if (!active) return;
+      
+        const handleKeyDown = (e) => {
+          const key = e.key.toLowerCase();
+      
+          if (key === "v") {
+            sendAction(player.name, "fold");
+          } else if (key === "b") {
+            sendAction(player.name, "call", amountToCall);
+          } else if (key === "n") {
+            setTimeout(() => {
+              const input = document.getElementById(`raise-input-${player.name}`);
+              if (input) {
+                input.focus();
+              }
+            }, 10);
+          } else if (key === "enter") {
+            const input = document.getElementById(`raise-input-${player.name}`);
+            if (input && document.activeElement === input && raiseAmount) {
+              sendAction(player.name, "raise", raiseAmount);
+              setRaiseAmount("");
+            }
+          }
+        };
+      
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+      }, [active, raiseAmount, amountToCall]);
 
     return (
         <div className="player-wrapper">
@@ -138,6 +162,7 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
                     </div>
                     <div className="action-row">
                         <input
+                            id={`raise-input-${player.name}`}
                             type="number"
                             value={raiseAmount}
                             onChange={(e) => setRaiseAmount(e.target.value)}
@@ -147,7 +172,8 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
                         <button onClick={(e) => { 
                             e.stopPropagation(); 
                             sendAction(player.name, "raise", raiseAmount);
-                            setSuggestion(null); }}>
+                            setSuggestion(null);
+                            setRaiseAmount(""); }}>
                             Raise
                         </button>
                     </div>

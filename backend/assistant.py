@@ -1,5 +1,5 @@
 def determine_position(pos_index, num_players):
-    positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
+    positions = ["BTN", "SB", "BB", "UTG", "MP", "CO"]
     return positions[pos_index % len(positions)]
 
 def classify_hand(cards):
@@ -23,8 +23,8 @@ def determine_action(position, hand, has_raiser, is_first_to_act, num_limpers, b
         "UTG": {
             "open_raise": {
                 "pairs": [f"{r}{r}" for r in "23456789TJQKA"],
-                "suited": ["ATs", "AJs", "AQs", "AKs", "KTs", "QTs", "JTs"],
-                "offsuit": ["AJo", "AQo", "KQo"],
+                "suited": ["ATs", "AJs", "AQs", "AKs", "KTs", "KJs", "KQs", "QJs", "QTs", "JTs"],
+                "offsuit": ["AJo", "AQo", "AKo", "KQo"],
             },
             "call_vs_raise": [],
             "3bet_vs_raise": [],
@@ -32,52 +32,54 @@ def determine_action(position, hand, has_raiser, is_first_to_act, num_limpers, b
         "MP": {
             "open_raise": {
                 "pairs": [f"{r}{r}" for r in "23456789TJQKA"],
-                "suited": ["ATs", "AJs", "AQs", "AKs", "KTs", "QTs", "JTs"],
-                "offsuit": ["AJo", "AQo", "KJo", "QJo"],
+                "suited": ["ATs", "AJs", "AQs", "AKs", "KTs", "KJs", "KQs", "QTs", "QJs", "JTs"],
+                "offsuit": ["AJo", "AQo", "AKo", "KQo"],
             },
-            "call_vs_raise": [f"{r}{r}" for r in "2233445566778899TTJJQQ"] + ["KQs", "AJs", "AQs", "AKs", "AQo"],
+            "call_vs_raise": [f"{r}{r}" for r in "23456789TJQ"] + ["KQs", "AJs", "AQs", "AKs", "AQo", "AKo"],
             "3bet_vs_raise": ["AA", "KK"],
         },
         "CO": {
             "open_raise": {
                 "pairs": [f"{r}{r}" for r in "23456789TJQKA"],
-                "suited": ["A2s", "A3s", "A4s", "A5s", "A6s", "A7s", "A8s", "A9s", "ATs", "AJs", "AQs", "AKs", "K8s", "K9s", "KTs", "KJs", "Q8s", "Q9s", "J8s", "T8s", "96s", "86s", "75s", "65s"],
-                "offsuit": ["A8o", "A9o", "ATo", "AJo", "AQo", "AKo", "K9o", "Q9o", "J9o", "T9o", "98o"],
+                "suited": ["A2s", "A3s", "A4s", "A5s", "A6s", "A7s", "A8s", "A9s", "ATs", "AJs", "AQs", "AKs", "K8s", "K9s", "KTs", "KJs", "KQs", "Q8s", "Q9s", "QTs", "QJs", "J8s", "J9s", "JTs", "T8s", "T9s", "96s", "97s", "98s", "86s", "87s", "75s", "76s", "65s"],
+                "offsuit": ["A8o", "A9o", "ATo", "AJo", "AQo", "AKo", "K9o", "KTo", "KJo", "KQo", "Q9o", "QTo", "QJo", "J9o", "JTo", "T9o", "98o"],
             },
-            "call_vs_raise": [f"{r}{r}" for r in "2233445566778899TTJJQQ"] + ["KQs", "ATs", "AJs", "AQs", "AKs", "KJs"],
+            "call_vs_raise": [f"{r}{r}" for r in "23456789TJQ"] + ["KJs", "KQs", "ATs", "AJs", "AQs", "AKs", "QJs", "AQo", "AKo"],
             "3bet_vs_raise": ["AA", "KK"],
         },
         "BTN": {
             "open_raise": {
                 "pairs": [f"{r}{r}" for r in "23456789TJQKA"],
-                "suited": ["A2s", "A3s", "A4s", "A5s", "A6s", "A7s", "A8s", "A9s", "ATs", "AJs", "AQs", "AKs", "K2s", "K3s", "K4s", "K5s", "K6s", "K7s", "K8s", "K9s", "KTs", "KJs", "Q7s", "Q8s", "Q9s", "J7s", "T6s", "96s", "86s", "75s", "64s", "54s"],
-                "offsuit": ["A2o", "A3o", "A4o", "A5o", "A6o", "A7o", "A8o", "A9o", "ATo", "AJo", "AQo", "AKo", "K7o", "Q8o", "J8o", "T8o", "98o"],
+                "suited": ["A2s", "A3s", "A4s", "A5s", "A6s", "A7s", "A8s", "A9s", "ATs", "AJs", "AQs", "AKs", "K2s", "K3s", "K4s", "K5s", "K6s", "K7s", "K8s", "K9s", "KTs", "KJs", "KQs", "Q7s", "Q8s", "Q9s", "QTs", "QJs", "J7s", "J8s", "J9s", "JTs", "T6s", "T7s", "T8s", "T9s", "96s", "97s", "98s", "86s" "87s", "75s", "76s", "64s", "65s", "54s"],
+                "offsuit": ["A2o", "A3o", "A4o", "A5o", "A6o", "A7o", "A8o", "A9o", "ATo", "AJo", "AQo", "AKo", "K7o", "K8o", "K9o", "KTo", "KJo", "KQo", "Q8o", "Q9o", "QTo", "QJo", "J8o", "J9o", "JTo", "T8o", "T9o", "98o"],
             },
-            "call_vs_raise": [f"{r}{r}" for r in "2233445566778899TTJJQQ"] + ["ATs", "AJs", "AQs", "AKs", "KTs", "QTs", "JTs"],
+            "call_vs_raise": [f"{r}{r}" for r in "23456789TJQ"] + ["ATs", "AJs", "AQs", "KTs", "KJs", "KQs", "QTs", "QJs", "JTs", "AQo"],
             "3bet_vs_raise": ["AKs", "AKo", "QQ", "KK", "AA"],
         },
         "SB": {
             "open_raise": {
                 "pairs": [f"{r}{r}" for r in "23456789TJQKA"],
-                "suited": ["A2s", "A3s", "A4s", "A5s", "A6s", "A7s", "A8s", "A9s", "ATs", "AJs", "AQs", "AKs", "K8s", "K9s", "KTs", "Q8s", "J8s", "T8s", "96s", "86s", "75s", "65s"],
-                "offsuit": ["A8o", "A9o", "ATo", "AJo", "AQo", "AKo", "K9o", "Q9o", "J9o", "T9o", "98o"],
+                "suited": ["A2s", "A3s", "A4s", "A5s", "A6s", "A7s", "A8s", "A9s", "ATs", "AJs", "AQs", "AKs", "K8s", "K9s", "KTs", "KJs", "KQs", "Q8s", "Q9s", "QTs", "QJs", "J8s", "J9s", "JTs", "T8s", "T9s", "96s", "97s", "98s", "86s", "87s", "75s", "76s", "65s"],
+                "offsuit": ["A8o", "A9o", "ATo", "AJo", "AQo", "AKo", "K9o", "KTo", "KJo", "KQo", "Q9o", "QTo", "QJo", "J9o", "JTo", "T9o", "98o"],
             },
-            "call_vs_raise": ["88", "99", "TT", "ATs"],
+            "call_vs_raise": ["88", "99", "TT", "ATs", "AJs", "AQs"],
             "3bet_vs_raise": ["JJ", "QQ", "KK", "AA", "AKs", "AKo"],
         },
         "BB": {
             "open_raise": {
                 "pairs": [f"{r}{r}" for r in "23456789TJQKA"],
-                "suited": ["A2s", "A3s", "A4s", "A5s", "A6s", "A7s", "A8s", "A9s", "ATs", "AJs", "AQs", "AKs", "K2s", "K3s", "K4s", "K5s", "K6s", "K7s", "K8s", "K9s", "KTs", "KJs", "Q7s", "Q8s", "Q9s", "J7s", "T6s", "96s", "86s", "75s", "64s", "54s"],
-                "offsuit": ["A2o", "A3o", "A4o", "A5o", "A6o", "A7o", "A8o", "A9o", "ATo", "AJo", "AQo", "AKo", "K7o", "K8o", "K9o", "Q8o", "J8o", "T8o", "98o"],
+                "suited": ["A2s", "A3s", "A4s", "A5s", "A6s", "A7s", "A8s", "A9s", "ATs", "AJs", "AQs", "AKs", "K2s", "K3s", "K4s", "K5s", "K6s", "K7s", "K8s", "K9s", "KTs", "KJs", "KQs", "Q7s", "Q8s", "Q9s", "QTs", "QJs", "J7s", "J8s", "J9s", "JTs", "T6s", "T7s", "T8s", "T9s", "96s", "97s", "98s", "86s" "87s", "75s", "76s", "64s", "65s", "54s"],
+                "offsuit": ["A2o", "A3o", "A4o", "A5o", "A6o", "A7o", "A8o", "A9o", "ATo", "AJo", "AQo", "AKo", "K7o", "K8o", "K9o", "KTo", "KJo", "KQo", "Q8o", "Q9o", "QTo", "QJo", "J8o", "J9o", "JTo", "T8o", "T9o", "98o"],
             },
-            "call_vs_raise": ["88", "99", "TT", "ATs"],
+            "call_vs_raise": ["88", "99", "TT", "ATs", "AJs", "AQs"],
             "3bet_vs_raise": ["JJ", "QQ", "KK", "AA", "AKs", "AKo"],
         },
     }
 
     p_rules = ranges[position]
-
+    print("+++++++++")
+    print(f"Position: {position}")
+    print("+++++++++")
     # First to act: use open_raise range
     if is_first_to_act:
         if hand in p_rules["open_raise"]["pairs"] or hand in p_rules["open_raise"]["suited"] or hand in p_rules["open_raise"]["offsuit"]:

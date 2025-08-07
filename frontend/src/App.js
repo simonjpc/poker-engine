@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from "react";
 import Table from "./components/Table";
 import HoleCardSelector from "./components/HoleCardSelector";
+import FlopCardSelector from "./components/FlopCardSelector";
 import { sendGameConfig, startGame, fetchGameState, resetGame } from "./api";
 import "./App.css";
 
+const DEFAULT_STACK = 20000;
+const API_URL = "http://localhost:4000";
+
 const INITIAL_PLAYERS = [
-  { id: 0, name: "Anne", amount: 20000, available: true },
-  { id: 1, name: "Benoît", amount: 20000, available: true },
-  { id: 2, name: "You", amount: 20000, available: true }, // This is the player controlled by the user
-  { id: 3, name: "Denis", amount: 20000, available: true },
-  { id: 4, name: "Elodie", amount: 20000, available: true },
-  { id: 5, name: "François", amount: 20000, available: true },
+  { id: 0, name: "Anne", amount: DEFAULT_STACK, available: true },
+  { id: 1, name: "Benoît", amount: DEFAULT_STACK, available: true },
+  { id: 2, name: "You", amount: DEFAULT_STACK, available: true }, // This is the player controlled by the user
+  { id: 3, name: "Denis", amount: DEFAULT_STACK, available: true },
+  { id: 4, name: "Elodie", amount: DEFAULT_STACK, available: true },
+  { id: 5, name: "François", amount: DEFAULT_STACK, available: true },
 ];
 
 function App() {
@@ -21,17 +25,34 @@ function App() {
   const [activePlayer, setActivePlayer] = useState(null);
   const [resetSignal, setResetSignal] = useState(false);
   const [cardInput, setCardInput] = useState("");  // 4-letter string
+  const [flopInput, setFlopInput] = useState("");  // 6-letter string
+  const [waitingForFlop, setWaitingForFlop] = useState(false);
 
   useEffect(() => {
+    let isActive = true;
+  
+    const poll = async () => {
+      if (!isActive) return;
+      const state = await fetchGameState();
+      setGameState(state);
+      setActivePlayer(state.active_player);
+
+      // Wait for user to input flop if preflop is done
+      if (state.awaiting_flop_input && !waitingForFlop) {
+        console.log("Triggering waitingForFlop");
+        setWaitingForFlop(true);
+      }
+
+      setTimeout(poll, 300);  // Reschedule next poll
+    };
+  
     if (gameStarted) {
-      const interval = setInterval(async () => {
-        const state = await fetchGameState();
-        console.log("Fetched game state:", state);
-        setGameState(state);
-        setActivePlayer(state.active_player);
-      }, 300);
-      return () => clearInterval(interval);
+      poll(); // Start polling
     }
+  
+    return () => {
+      isActive = false; // Stop loop on unmount or game stop
+    };
   }, [gameStarted]);
 
   const handleUpdatePlayer = (id, updates) => {
@@ -101,12 +122,70 @@ function App() {
   
     // Reset frontend state
     setCardInput("");
+    setFlopInput("");
+    setWaitingForFlop(false);
     setGameStarted(false);
     setGameState(null);
     setActivePlayer(null);
-    setPlayers(INITIAL_PLAYERS);
+    // setPlayers(INITIAL_PLAYERS);
+    setPlayers((prev) =>
+        prev.map((p, i) => ({
+            ...p,
+            amount: gameState?.players?.[i]?.stack ?? p.amount,
+        }))
+    );
     setButtonPlayerId(0);
     setResetSignal(prev => !prev);
+  };
+
+  const handleSubmitFlop = async () => {
+    const parseFlop = (input) => {
+      const validSuits = ["s", "h", "d", "c"];
+      const validRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "t", "j", "q", "k", "a"];
+      if (input.length === 6) {
+        const cards = [];
+        for (let i = 0; i < 3; i++) {
+          const r = input[i * 2].toUpperCase();
+          const s = input[i * 2 + 1];
+          if (validRanks.includes(r.toLowerCase()) && validSuits.includes(s)) {
+            cards.push(`${r}${convertSuit(s)}`);
+          } else {
+            return null;
+          }
+        }
+        return cards;
+      }
+      return null;
+    };
+  
+    const convertSuit = (suit) => {
+      switch (suit) {
+        case "s": return "♠";
+        case "h": return "♥";
+        case "d": return "♦";
+        case "c": return "♣";
+        default: return suit;
+      }
+    };
+  
+    const parsedFlop = parseFlop(flopInput);
+    if (!parsedFlop) {
+      alert("Invalid flop input. Use format like 8s9hjd");
+      return;
+    }
+  
+    try {
+      await fetch(`${API_URL}/set_flop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flop_cards: parsedFlop }),
+      });
+  
+      setFlopInput("");
+      setWaitingForFlop(false);
+    } catch (e) {
+      console.error("Error sending flop:", e);
+    }
   };
 
   return (
@@ -139,7 +218,21 @@ function App() {
           cardInput={cardInput}
           setCardInput={setCardInput}
           disabled={gameStarted}
+          onSubmit={handleStartGame}
       />)}
+      {waitingForFlop && (
+        <FlopCardSelector
+          flopInput={flopInput}
+          setFlopInput={setFlopInput}
+          onSubmit={handleSubmitFlop}
+          disabled={false}
+        />
+      )}
+      <div className="community-cards">
+        {gameState?.community_cards?.map((card, index) => (
+          <span key={index} className="card">{card}</span>
+        ))}
+      </div>
     </div>
   );
 }

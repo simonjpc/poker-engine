@@ -36,3 +36,19 @@
   cursor: pointer;
   margin-top: 20px;
 }
+
+.community-cards {
+  display: flex;
+  justify-content: center;
+  margin-top: -40px;
+  gap: 10px;
+}
+
+.community-cards .card {
+  background: white;
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 6px;
+}

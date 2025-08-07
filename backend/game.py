@@ -16,7 +16,10 @@ class Game:
         :param players: List of player names.
         :param starting_stack: The amount of chips each player starts with.
         """
-        self.players = [Player(name, stack, i) for i, (name, stack) in enumerate(zip(players, starting_stacks))]
+        # self.players = [Player(name, stack, i) for i, (name, stack) in enumerate(zip(players, starting_stacks))]
+        self.players = []
+        for idx, (name, stack) in enumerate(zip(players, starting_stacks)):
+            self.players.append(Player(name, stack, idx))
         self.current_bet = max(p.current_bet for p in self.players) if self.players else 0
         self.deck = Deck()  # Create a deck instance
         self.community_cards = []  # Store community cards
@@ -29,6 +32,7 @@ class Game:
         self.current_betting_round = None  # Stores the current betting round
         self.hand_number = 0  # Keeps track of how many hands have been played
         self.manual_holecards = manual_holecards or {}
+        self.ready_for_next_hand = False  # Flag to indicate if the game is ready for the next hand
 
     def start_game(self, max_hands=10):
         """
@@ -38,11 +42,48 @@ class Game:
         """
         for _ in range(max_hands):
             self.play_hand()
+            while not self.ready_for_next_hand:
+                1
             if self.check_game_over():
                 break  # Stop the game if only one player remains
         print("\nGame Over!")
 
     def play_hand(self):
+        """
+        Manages a single hand of poker from dealing to showdown.
+        """
+        self.hand_number += 1
+        print(f"\n=== Hand {self.hand_number} ===")
+
+        self.reset_hand()
+        self.deck.shuffle()
+        self.assign_blinds()
+        self.deal_hole_cards()
+        self.execute_betting_round("Preflop")
+
+        if self.hand_continues():
+            self.awaiting_flop_input = True  # ✅ ADD THIS
+            
+        print("after waitingself.current_bet: ", self.current_bet)
+        # if self.hand_continues():
+        #     self.deal_community_cards(3, "Flop")
+        #     self.execute_betting_round("Flop")
+
+        # if self.hand_continues():
+        #     self.deal_community_cards(1, "Turn")
+        #     self.execute_betting_round("Turn")
+
+        # if self.hand_continues():
+        #     self.deal_community_cards(1, "River")
+        #     self.execute_betting_round("River")
+
+        # if self.hand_continues():
+        #     self.showdown()
+
+        # self.reset_players_for_next_hand()
+        # self.rotate_dealer()
+    
+    def play_hand_old(self):
         """
         Manages a single hand of poker from dealing to showdown.
         """
@@ -114,8 +155,11 @@ class Game:
                     self.deck.cards = [c for c in self.deck.cards if c not in cards]
                     player.receive_cards(cards)
                     print(f"{player.name} receives manually selected hole cards: {cards}")
-                else:
+                elif player.name.lower() == "you" and "you" not in self.manual_holecards:
                     player.receive_cards(self.deck.deal(2))
+                    print(f"{player.name} receives two hole cards.")
+                else:
+                    # player.receive_cards(self.deck.deal(2))
                     print(f"{player.name} receives two hole cards.")
 
     def deal_community_cards(self, num_cards, round_name):
@@ -150,6 +194,8 @@ class Game:
         )
 
         self.current_betting_round.process_actions() # <- line not needed for frontend, but needed if playing with terminal
+        print("self.pot: ", self.pot)
+        print("self.current_betting_round.pot: ", self.current_betting_round.pot)
         self.pot = self.current_betting_round.pot  # Update the total pot
 
     def hand_continues(self):
