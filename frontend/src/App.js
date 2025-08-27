@@ -43,7 +43,7 @@ function App() {
         setWaitingForFlop(true);
       }
 
-      setTimeout(poll, 300);  // Reschedule next poll
+      setTimeout(poll, 200);  // Reschedule next poll
     };
   
     if (gameStarted) {
@@ -55,6 +55,21 @@ function App() {
     };
   }, [gameStarted]);
 
+  useEffect(() => {
+    const onKey = (e) => {
+      const k = e.key?.toLowerCase?.();
+      if (k === "r") {
+        e.preventDefault();
+        handleResetGame();
+      } else if (!gameStarted && (k === "t" || k === "e")) {
+        e.preventDefault();
+        nudgeButton(k === "t" ? +1 : -1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [gameStarted, players]);
+
   const handleUpdatePlayer = (id, updates) => {
     setPlayers((prev) =>
       prev.map((p) => (p.id === id ? { ...p, ...updates } : p))
@@ -63,16 +78,21 @@ function App() {
 
   const handleStartGame = async () => {
 
-    const parseHoleCards = (input) => {
+  const parseHoleCards = (input) => {
+    const rankMap = { "/": "T", "*": "J", "-": "Q", "+": "K", "0": "A" };
+    const suitMap = { "u": "s", "i": "c", "o": "d", "p": "h" };
+
     const validSuits = ["s", "h", "d", "c"];
-    const validRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "t", "j", "q", "k", "a"];
+    const validRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+  
     if (input.length === 4) {
-      const r1 = input[0].toUpperCase();
-      const s1 = input[1];
-      const r2 = input[2].toUpperCase();
-      const s2 = input[3];
-      if (validRanks.includes(input[0]) && validSuits.includes(s1) &&
-          validRanks.includes(input[2]) && validSuits.includes(s2)) {
+      const r1 = rankMap[input[0]] || input[0].toUpperCase();
+      const s1 = suitMap[input[1]] || input[1];
+      const r2 = rankMap[input[2]] || input[2].toUpperCase();
+      const s2 = suitMap[input[3]] || input[3];
+  
+      if (validRanks.includes(r1) && validSuits.includes(s1) &&
+          validRanks.includes(r2) && validSuits.includes(s2)) {
         return [`${r1}${convertSuit(s1)}`, `${r2}${convertSuit(s2)}`];
       }
     }
@@ -141,13 +161,17 @@ function App() {
   const handleSubmitFlop = async () => {
     const parseFlop = (input) => {
       const validSuits = ["s", "h", "d", "c"];
-      const validRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "t", "j", "q", "k", "a"];
+      const validRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+      const rankMap = { "/": "T", "*": "J", "-": "Q", "+": "K", "0": "A" };
+      const suitMap = { "u": "s", "i": "c", "o": "d", "p": "h" };
+    
       if (input.length === 6) {
         const cards = [];
         for (let i = 0; i < 3; i++) {
-          const r = input[i * 2].toUpperCase();
-          const s = input[i * 2 + 1];
-          if (validRanks.includes(r.toLowerCase()) && validSuits.includes(s)) {
+          const r = rankMap[input[i * 2]] || input[i * 2].toUpperCase();
+          const s = suitMap[input[i * 2 + 1]] || input[i * 2 + 1];
+    
+          if (validRanks.includes(r) && validSuits.includes(s)) {
             cards.push(`${r}${convertSuit(s)}`);
           } else {
             return null;
@@ -188,6 +212,28 @@ function App() {
     }
   };
 
+  const nudgeButton = (delta) => {
+    if (gameStarted) return;
+    setButtonPlayerId((prevId) => {
+      if (!players || players.length === 0) return prevId;
+  
+      const currentIndex = players.findIndex(p => p.id === prevId);
+      if (currentIndex === -1) return prevId;
+  
+      const len = players.length;
+      // try up to len steps to find the next available player
+      for (let step = 1; step <= len; step++) {
+        const candidateIndex = (currentIndex + delta * step + len) % len;
+        if (players[candidateIndex]?.available) {
+          return players[candidateIndex].id;
+        }
+      }
+      return prevId; // fallback (no available players found)
+    });
+  };
+
+  const boardCount = gameState?.community_cards?.length ?? 0;
+
   return (
     <div className="App">
       <Table
@@ -200,6 +246,7 @@ function App() {
           playerBets={gameState?.players || []}
           activePlayer={activePlayer}
           resetSignal={resetSignal}
+          boardCount={boardCount}
       />
       <button
           className="start-button"
