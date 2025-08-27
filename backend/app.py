@@ -1,7 +1,8 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from game import Game
-from assistant import  determine_position, classify_hand, determine_action
+from assistant import  determine_position, classify_hand, determine_action, get_updated_ranges
+from flop_assistant import recommend_flop_action
 import threading
 
 app = Flask(__name__)
@@ -53,7 +54,6 @@ def player_action():
     action = data.get("action")
     amount = float(data.get("amount", 0)) # this is only valid for "raise" action
     player = next((p for p in game_instance.players if p.name == player_name), None)
-    
     
     if not player:
         return jsonify({"error": "Player not found"}), 404
@@ -167,7 +167,7 @@ def recommend_action():
         "position": position_name,
         "hand": hand_code,
         "recommendation": action,
-        "amount": amount
+        "amount": amount,
     })
 
 @app.route('/set_flop', methods=['POST'])
@@ -193,9 +193,61 @@ def set_flop():
     game_instance.awaiting_flop_input = False
 
     # Proceed with the next betting round
-    game_instance.execute_betting_round("Flop")
+    # game_instance.execute_betting_round("Flop")
+    # 🔹 Instead of calling execute_betting_round("Flop") directly:
+    import threading
+    def start_flop_betting_round():
+        game_instance.execute_betting_round("Flop")
+    threading.Thread(target=start_flop_betting_round, daemon=True).start()
 
     return jsonify({"message": "Flop set"})
+
+@app.route('/recommend_flop_action', methods=['POST'])
+def recommend_flop_action_route():
+    """
+    Recommends an action based on your hand, the flop, and opponent's range.
+    """
+    if not game_instance or not game_instance.community_cards or len(game_instance.community_cards) < 3:
+        return jsonify({"error": "Flop not dealt yet"}), 400
+
+    player = next((p for p in game_instance.players if p.name.lower() == "you"), None)
+    if not player or player.folded or player.all_in:
+        return jsonify({"error": "Player not available for recommendation"}), 400
+
+    # Use pre-processed range for now — will be dynamic later
+    # For now: assume tight range
+    updated_ranges = get_updated_ranges(
+        players=game_instance.players,
+        big_blind=game_instance.big_blind,
+        dealer_position=game_instance.dealer_position,
+    )
+    
+    hero_hand = player.hole_cards
+    flop = game_instance.community_cards[:3]
+    
+    opponent_ranges = {
+        pos: rng for pos, rng in updated_ranges.items()
+        if pos != determine_position(
+            (player.position - game_instance.dealer_position) % len(game_instance.players),
+            len(game_instance.players)
+        )
+    }
+    # print("Flop: ", flop)
+    # print("Opponent ranges: ", opponent_ranges)
+    # For simplicity, assume 1 opponent (e.g., SB)
+    # opponent_range = updated_ranges.get("SB", [])  # ← eventually get dynamically based on real SB
+
+    equity_results = recommend_flop_action(
+        hero_hand=hero_hand,
+        flop=flop,
+        updated_opponent_range=opponent_ranges
+    )   
+    print("equity_results: ", equity_results)
+
+    return jsonify({
+        "opponent_ranges": opponent_ranges,
+        "equity_results": equity_results,
+    })
 
 @app.route("/reset", methods=["POST"])
 def reset_game():

@@ -121,7 +121,7 @@ class BettingRound:
                 if valid_actions is None:  # Player has no chips
                     continue
 
-                action, amount = player.make_decision(valid_actions)
+                action, amount =  player.make_decision(valid_actions)
                 self.current_index += 1
                 
                 if action == "fold":
@@ -139,9 +139,6 @@ class BettingRound:
             # Stop when no raises have occurred
             if not action_taken:
                 break  # Betting round ends
-
-        # for player in self.players:
-        #     player.current_bet = 0
 
 
     def find_first_active_player_postflop(self):
