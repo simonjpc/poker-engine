@@ -2,7 +2,7 @@ from player import Player
 from deck import Deck
 from betting import BettingRound
 from evaluator import HandEvaluator
-
+import time
 class Game:
     """
     Manages the entire game of No-Limit Texas Hold'em.
@@ -43,7 +43,7 @@ class Game:
         for _ in range(max_hands):
             self.play_hand()
             while not self.ready_for_next_hand:
-                1
+                time.sleep(0.01)
             if self.check_game_over():
                 break  # Stop the game if only one player remains
         print("\nGame Over!")

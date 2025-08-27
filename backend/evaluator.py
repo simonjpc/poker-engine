@@ -1,5 +1,6 @@
+from treys import Evaluator, Card, Deck
 from collections import Counter
-from itertools import combinations
+from itertools import combinations, product
 
 class HandEvaluator:
     """
@@ -18,6 +19,15 @@ class HandEvaluator:
         "Straight Flush": 9,
         "Royal Flush": 10
     }
+
+    SUIT_LETTERS = ["s", "h", "d", "c"]
+    SUIT_SYMBOMS_TO_LETTERS = {
+        "♠": "s",
+        "♥": "h",
+        "♦": "d",
+        "♣": "c",
+    }
+    SUIT_LETTERS_TO_SYMBOLS = {v: k for k, v in SUIT_SYMBOMS_TO_LETTERS.items()}
 
     @staticmethod
     def evaluate_hand(hole_cards, community_cards):
@@ -174,6 +184,135 @@ class HandEvaluator:
                 winners.append(player_name)
 
         return winners
+    
+    def expand_notation(self, notation):
+        """
+        Expands shorthand notation for hands into full card representations.
+        
+        :param notation: A string representing a hand (e.g., "AKs", "77", "AJo").
+        :return: List of full card representations.
+        """
+        rank1, rank2 = notation[0], notation[1]
+        suited = "s" if notation[-1] == "s" else "o" if notation[-1] == "o" else None
+        
+        combos = []
+
+        if rank1 == rank2:
+            # Pair
+            for s1, s2 in product(HandEvaluator.SUIT_LETTERS, HandEvaluator.SUIT_LETTERS):
+                if s1 < s2:
+                    combos.append([rank1 + s1, rank2 + s2])
+        elif suited == "s":
+            for s in HandEvaluator.SUIT_LETTERS:
+                combos.append([rank1 + s, rank2 + s])
+        elif suited == "o":
+            for s1 in HandEvaluator.SUIT_LETTERS:
+                for s2 in HandEvaluator.SUIT_LETTERS:
+                    if s1 != s2:
+                        combos.append([rank1 + s1, rank2 + s2])
+        else:
+            combos += self.expand_notation(rank1 + rank2 + "s")
+            combos += self.expand_notation(rank1 + rank2 + "o")
+        return combos
+    
+    def filter_dead_cards(self, combos, dead_cards):
+        """
+        Filters out elements that are contained in the hole cards and community cards
+        
+        :param combos: List of expanded card combinations
+        :param dead_cards: List of cards from hole and community cards
+        :return: Filtered list of combos
+        """
+        return [combo for combo in combos if combo[0] not in dead_cards and combo[1] not in dead_cards]
+    
+    def get_best_combo(self, combos, flop):
+        """Evaluates the best hand from a list of card combinations and a flop using library treys
+        
+        :param combos: List of card combinations (2 cards)
+        :param flop: List of community cards (3 cards)
+        :return: Best hand from combination and associated rank
+        """
+        
+        evaluator = Evaluator()
+        nb_considered = 2
+        best_combo = []
+        best_score = [9999 for _ in range(nb_considered)]
+        flop_cards = [Card.new(card[0] + HandEvaluator.SUIT_SYMBOMS_TO_LETTERS[card[1]]) for card in flop]
+
+        for combo in combos:
+            if len(best_combo) < nb_considered:
+                best_combo.append(combo)
+            else:
+                hand_cards = [
+                    Card.new(combo[0]),
+                    Card.new(combo[1]),
+                ]
+                if len(set(hand_cards).intersection(set(flop_cards))):
+                    score = 9999
+                else:
+                    score = evaluator.evaluate(hand_cards, flop_cards)
+                    best_score.append(score)
+                    best_score.sort()
+                    score_index = best_score.index(score)
+                    best_combo = best_combo[:score_index] + [combo] + best_combo[score_index + 1:]
+                    best_combo = best_combo[:nb_considered]
+                    best_score = best_score[:nb_considered]
+        
+        return best_combo[-1], best_score[-1]
+
+    def get_best_opponent_hand(self, opponent_range, flop, hole_cards):
+        
+        dead_cards = flop + hole_cards
+        dead_cards = [card[0] + HandEvaluator.SUIT_SYMBOMS_TO_LETTERS[card[1]] for card in dead_cards]
+
+        all_combos = []
+        for notation in opponent_range:
+            expanded = self.expand_notation(notation)
+            valid = self.filter_dead_cards(expanded, dead_cards)
+            all_combos += valid
+        best_combo, best_score = self.get_best_combo(all_combos, flop)
+        
+        best_hand = {
+            "combo": [combo[0] + HandEvaluator.SUIT_LETTERS_TO_SYMBOLS[combo[1]] for combo in best_combo],
+            "score": best_score,
+        }
+        
+        return best_hand
+    
+    def compute_outs(self, hole_cards, flop, opponent_combo):
+        """Computes the number of outs for a given hand against an opponent's combo
+        
+        :param hole_cards: List of hole cards (2 cards)
+        :param flop: List of community cards (3 cards)
+        :param opponent_combo: Opponent's best hand in his range (2 cards)
+        :return: Number of outs
+        """
+        evaluator = Evaluator()
+        deck = Deck()
+        known_cards = flop + hole_cards + opponent_combo
+        known_card_objs = [Card.new(c[0] + HandEvaluator.SUIT_SYMBOMS_TO_LETTERS[c[1]]) for c in known_cards]
+
+
+        remaining_deck = [c for c in deck.cards if c not in known_card_objs]
+
+        hole_cards = [Card.new(c[0] + HandEvaluator.SUIT_SYMBOMS_TO_LETTERS[c[1]]) for c in hole_cards]
+        opponent_cards = [Card.new(c[0] + HandEvaluator.SUIT_SYMBOMS_TO_LETTERS[c[1]]) for c in opponent_combo]
+        flop_cards = [Card.new(c[0] + HandEvaluator.SUIT_SYMBOMS_TO_LETTERS[c[1]]) for c in flop]
+
+        # we could also expand this to two hands (turn, river)
+        outs_one_hand = set()
+
+        for turn in remaining_deck:
+            community = flop_cards + [turn]
+            player_score = evaluator.evaluate(hole_cards, community)
+            opp_score = evaluator.evaluate(opponent_cards, community)
+
+            if player_score < opp_score:
+                outs_one_hand.add(turn)
+
+        return {
+            "outs_on_turn": len(outs_one_hand),
+        }
 
 if __name__ == "__main__":
     # Players' hole cards

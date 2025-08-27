@@ -1,3 +1,5 @@
+import time
+
 class Player:
     def __init__(self, name: str, stack: int, position: int):
         """
@@ -28,43 +30,43 @@ class Player:
         """
         self.hole_cards = cards
 
-    # def make_decision_terminal(self, valid_actions, ai_model=None):
-    #     """
-    #     Returns an action based on available options.
-    #     Supports AI-based decisions if an AI model is provided.
+    def make_decision_terminal(self, valid_actions, ai_model=None):
+        """
+        Returns an action based on available options.
+        Supports AI-based decisions if an AI model is provided.
         
-    #     :param valid_actions: Dictionary of available actions.
-    #     :param ai_model: Optional AI model for automated decision-making.
-    #     :return: Tuple (action: str, amount: int or None)
-    #     """
-    #     if ai_model:
-    #         return ai_model.choose_action(valid_actions)  # AI chooses the best action
+        :param valid_actions: Dictionary of available actions.
+        :param ai_model: Optional AI model for automated decision-making.
+        :return: Tuple (action: str, amount: int or None)
+        """
+        if ai_model:
+            return ai_model.choose_action(valid_actions)  # AI chooses the best action
 
-    #     # Otherwise, use manual input
-    #     print(f"\n{self.name}'s Turn - Stack: {self.stack} | Valid actions: {valid_actions}")
-    #     while True:
-    #         action = input("Choose action (fold, call, raise): ").strip().lower()
-    #         if action in valid_actions:
-    #             if action == "raise":
-    #                 min_raise, max_raise = valid_actions["raise"]
-    #                 amount = int(input(f"Enter raise amount ({min_raise}-{max_raise}): "))
-    #                 if amount > max_raise:
-    #                     return "raise", max_raise
-    #                 elif min_raise <= amount <= max_raise:
-    #                     return "raise", amount
-    #             else:
-    #                 return action, valid_actions.get(action, None)
-    #         print("Invalid action. Try again.")
-
+        # Otherwise, use manual input
+        print(f"\n{self.name}'s Turn - Stack: {self.stack} | Valid actions: {valid_actions}")
+        while True:
+            action = input("Choose action (fold, call, raise): ").strip().lower()
+            if action in valid_actions:
+                if action == "raise":
+                    min_raise, max_raise = valid_actions["raise"]
+                    amount = int(input(f"Enter raise amount ({min_raise}-{max_raise}): "))
+                    if amount > max_raise:
+                        return "raise", max_raise
+                    elif min_raise <= amount <= max_raise:
+                        return "raise", amount
+                else:
+                    return action, valid_actions.get(action, None)
+            print("Invalid action. Try again.")
+    
     def make_decision(self, valid_actions, ai_model=False):
-
         if ai_model:
             return ai_model.choose_action(valid_actions)  # AI chooses the best action
         
         self.waiting_for_action = True
         print(f"⏳ Waiting for frontend to provide action for {self.name}")
         while self.pending_action is None:
-            1
+            time.sleep(0.01)  # Add a small delay to avoid busy-waiting
+
         self.waiting_for_action = False
         action_and_amount = self.pending_action
         self.pending_action = None
