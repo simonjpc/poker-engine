@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { sendAction } from "../api";
 import "./Player.css";
 
-export default function Player({ player, onUpdate, disabled, position, dealerPosition, highestBet, active, currentStack, currentBet, isFolded, isAllIn, HoleCards, resetSignal }) {
+export default function Player({ player, onUpdate, disabled, position, dealerPosition, highestBet, active, currentStack, currentBet, isFolded, isAllIn, HoleCards, resetSignal, boardCount }) {
 
     const API_URL = "http://localhost:4000";
       
@@ -36,16 +36,40 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
 
     useEffect(() => {
         if (active && player.name === "You") {
-            fetch(`${API_URL}/recommend_action`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-            })
+            fetch(`${API_URL}/game_state`)
                 .then((res) => res.json())
-                .then((data) => {
-                    if (!data.error) setSuggestion(`${data.recommendation.toUpperCase()}${data.amount ? ` to ${data.amount}` : ''}`);
+                .then((state) => {
+                    const hasFlop = state.community_cards && state.community_cards.length >= 3;
+                    const endpoint = hasFlop ? "/recommend_flop_action" : "/recommend_action";
+    
+                    fetch(`${API_URL}${endpoint}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                    })
+                        .then((res) => res.json())
+                        .then((data) => {
+                            if (!data.error) {
+                                if (hasFlop) {
+                                    const equity_results = data.equity_results;
+                                    if (equity_results && Object.keys(equity_results).length > 0) {
+                                        const formatted = Object.entries(equity_results)
+                                            .map(([pos, info]) =>
+                                                `${pos}: EQ ${info.equity.toFixed(1)}% (${info.outs} outs)`
+                                            )
+                                            .join("\n");
+                                        setSuggestion(formatted);
+                                    } else {
+                                        setSuggestion("No opponents to evaluate");
+                                    }
+                                } else {
+                                    setSuggestion(`${data.recommendation.toUpperCase()}${data.amount ? ` to ${data.amount}` : ''}`);
+                                }
+                            }
+                        });
                 });
         }
-    }, [active]);
+        return () => {};
+    }, [active, boardCount]);
 
     useEffect(() => {
         setSuggestion(null);

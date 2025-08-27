@@ -76,8 +76,6 @@
 
 .raise-input {
     width: 50px;
-    /* text-align: center; */
-    /* border: 1px solid gray; */
     border: none;
     border-radius: 5px;
     padding: 5px;
@@ -127,7 +125,8 @@
 }
 
 .suggestion-box-right {
-    white-space: nowrap;
+    white-space: pre-wrap; /* <-- KEY CHANGE for multiline */
+    width: 200px;
     right: -170px;
     top: -240px;
     background-color: #eef;
@@ -138,10 +137,7 @@
     font-size: 12px;
     font-weight: bold;
     box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);
-    /* height: fit-content; */
     position: relative;
-    /* top: 0; */
-    /* left: 0; */
 }
 
 .card-selector {

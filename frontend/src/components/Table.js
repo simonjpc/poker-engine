@@ -1,7 +1,7 @@
 import Player from "./Player";
 import "./Table.css"; // Import styles for better layout
 
-export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerId, onSetButton, highestBet, playerBets, activePlayer, resetSignal }) {
+export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerId, onSetButton, highestBet, playerBets, activePlayer, resetSignal, boardCount }) {
     const radius = 250; // Radius of the circle
     const centerX = 420;
     const centerY = 120;
@@ -23,7 +23,6 @@ export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerI
             const angleInRadians = (angleInDegrees * Math.PI) / 180;
 
             const x = centerX + 2.2 * radius * Math.cos(angleInRadians);
-            // const y = centerY + 1.02 * radius * Math.sin(angleInRadians);
             let y = centerY + 1.02 * radius * Math.sin(angleInRadians);
 
             // Nudge top-most (index 0) and bottom-most (index 3) players vertically
@@ -34,14 +33,7 @@ export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerI
             }
 
             // Match player by name from /state
-            console.log("Frontend Player Mapping:");
-            console.log("Frontend player:", player.name);
-            console.log("Backend live data:", playerBets);
             const liveState = playerBets?.find(p => p.name === player.name);
-            console.log("Matched backend player:", liveState);
-
-            console.log("Matching frontend name:", player.name);
-            console.log("Against backend names:", playerBets.map(p => p.name));
             
             return (
                 <div
@@ -65,6 +57,7 @@ export default function Table({ players, onUpdatePlayer, disabled, buttonPlayerI
                             isAllIn={liveState?.all_in ?? false}
                             HoleCards={liveState?.hole_cards || []}
                             resetSignal={resetSignal}
+                            boardCount={boardCount}
                         />
                     </div>
                 </div>
