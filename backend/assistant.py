@@ -48,6 +48,7 @@ def get_updated_ranges(players, big_blind, dealer_position):
     """
     Return a filtered dict of player ranges based on preflop actions.
     """
+
     updated_ranges = {}
 
     for player in players:
