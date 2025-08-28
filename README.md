@@ -27,11 +27,11 @@ detailed description of the components.
 
 ### Frontend
 
-Go to the frontend folder with `cd frontend` and execute `npm start`
+Go to the [frontend](frontend/) folder with `cd frontend` and execute `npm start`
 
 ### Backend
 
-Go to the frontend folder with `cd backend` and execute `python app.py`
+Go to the [backend](backend/) folder with `cd backend` and execute `python app.py`
 
 Additionally, you could launch the backend with gunicorn by doing `gunicorn -w 1 -b 0.0.0.0:4000 app:app` (note that the engine works only for 1 worker. It might crash when the -w argument is different than 1)
 

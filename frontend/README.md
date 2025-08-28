@@ -1,70 +1,91 @@
-# Getting Started with Create React App
+# Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This folder contains the frontend implementation for the poker engine. The frontend is a React-based web application that provides a user interface for interacting with the backend.
 
-## Available Scripts
+## Description
 
-In the project directory, you can run:
+The frontend allows users to input poker game data, such as hole cards, community cards, and betting decisions, and displays the recommendations and game evaluations provided by the backend.
 
-### `npm start`
+### Key Features:
+- User-friendly interface for inputting poker game data.
+- Displays recommendations and game evaluations from the backend.
+- Built with React and styled for responsiveness.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Requirements
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- Node.js (v16 or higher recommended)
+- npm (Node Package Manager)
 
-### `npm test`
+## Installation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Navigate to the `frontend` folder:
+   ```bash
+   cd frontend
+   ```
 
-### `npm run build`
+2. Install the required dependencies:
+   ```bash
+   npm install
+   ```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Usage
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Running the Frontend
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+To start the development server, run:
 
-### `npm run eject`
+```bash
+npm start
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+This will launch the application in development mode. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The page will reload when you make changes to the code.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Building for Production
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+To create a production build, run:
 
-## Learn More
+```bash
+npm run build
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+This will generate optimized static files in the `build` folder.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Testing
 
-### Code Splitting
+To run the test suite, use:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```bash
+npm test
+```
 
-### Analyzing the Bundle Size
+This will launch the test runner in interactive watch mode.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## File Structure
 
-### Making a Progressive Web App
+- **`public/`**: Contains static assets like `index.html`, icons, and the manifest file.
+- **`src/`**: Contains the React application source code.
+  - **`api.js`**: Handles API calls to the backend for fetching game recommendations and submitting player actions.
+  - **`App.js`**: Main application component that manages the overall layout and routing of the application.
+  - **`App.css`**: Styles for the main application component, including global layout and theme.
+  - **`index.js`**: Entry point for the React application, responsible for rendering the `App` component into the DOM.
+  - **`components/`**: Contains reusable React components:
+    - **`HoleCardSelector.js`**: Component for selecting and inputting hole cards for a player.
+    - **`FlopCardSelector.js`**: Component for selecting and inputting flop cards during the game.
+    - **`Player.js`**: Represents a player at the table, including their actions, status, and cards.
+    - **`Table.js`**: Represents the poker table layout, including player positions and game state.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Notes
 
-### Advanced Configuration
+- Ensure the backend is running before interacting with the frontend.
+- The frontend communicates with the backend via API endpoints. Update the API base URL in [`api.js`](src/api.js) if necessary.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Disclaimer and contributing
 
-### Deployment
+The ~85-90% of the frontend code was generated by a language model. The developer 
+Contributions are welcome! If you would like to contribute, please fork the repository and submit a pull request.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## License
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This project is licensed under the Apache License. See the [LICENSE](../LICENSE) file for details.
