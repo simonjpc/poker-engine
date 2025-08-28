@@ -1,42 +1,37 @@
 # poker-engine
 No-Limit Texas Hold'em poker engine for simulation and training
 
-## TODO
+## Description
 
-- test folding before the end of the game
-- test all in on different turns
-- adjust where necessary
+This is not the traditional engine where cards are dealt randomly 
+simulating a real poker game.
+
+Instead, this engine allows to input holy cards and community cards as
+well as betting decision for all the players manually. The engine 
+recommends which actions to take based on:
+
+- The holy cards and betting decisions of all players for the preflop round
+- The holy cards, betting decisions and community cards for the flop and postflop round
+
+## Notes
+
+- Currently the engine works until the flop round. Turn and river rounds have not been developed yet (WIP).
+- Frontend and backend must be launched separately. This will be optimized in further versions
 
 ## Components
 
-* Game State Management to track everything happening in a hand
-  - Player positions (Small Blind, Big Blind, UTG, Middle Position (UTG+1), Cut-Off, Button)
-  - Stack sizes and current pot size
-  - Betting history and action sequence
-  - Community cards and hole cards (?)
+Please refer to the backend and frontend descriptions for a 
+detailed description of the components.
 
-* Texas Hold'Em rules
-  - Blinds and antes (?)
-  - Legal bet sizes (No-Limit allows any size)
-  - Valid actions (Fold, Call, Bet, Raise)
-  - Side pots (if multiple players are all-in)
+## How to make it work
 
-* Hand Evaluation to deterine the winning hand 
-  - Ranks hands.
-  - Handles tiebreakers and split pots.
+### Frontend
 
-* Betting Logic to manage betting rounds
-  - Preflop  
-  - Flop  
-  - Turn
-  - River
+Go to the frontend folder with `cd frontend` and execute `npm start`
 
-* Player Interaction
-  - Allow players to submit actions: bet(amount), call(), fold(), check()
-  - Returns updated game state after an action
+### Backend
 
-* Deck & Randomization
-  - Shuffles and deals cards randomly to ensure fair play.
+Go to the frontend folder with `cd backend` and execute `python app.py`
 
-* Logging & Debugging
+Additionally, you could launch the backend with gunicorn by doing `gunicorn -w 1 -b 0.0.0.0:4000 app:app` (note that the engine works only for 1 worker. It might crash when the -w argument is different than 1)
 
