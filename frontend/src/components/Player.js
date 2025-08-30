@@ -34,13 +34,22 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
 
     const [suggestion, setSuggestion] = useState(null);
 
+    function getEndpoint(state) {
+        if (state.community_cards?.length >= 4) return "/recommend_turn_action";
+        if (state.community_cards?.length >= 3) return "/recommend_flop_action";
+        return "/recommend_preflop_action";
+      }
+
     useEffect(() => {
         if (active && player.name === "You") {
             fetch(`${API_URL}/game_state`)
                 .then((res) => res.json())
                 .then((state) => {
                     const hasFlop = state.community_cards && state.community_cards.length >= 3;
-                    const endpoint = hasFlop ? "/recommend_flop_action" : "/recommend_action";
+                    // const endpoint = hasFlop ? "/recommend_flop_action" : "/recommend_preflop_action";
+                    const hasTurn = state.community_cards && state.community_cards.length >= 4;
+                    // endpoint = hasTurn ? "/recommend_turn_action" : endpoint;
+                    const endpoint = getEndpoint(state);
     
                     fetch(`${API_URL}${endpoint}`, {
                         method: "POST",
@@ -49,7 +58,7 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
                         .then((res) => res.json())
                         .then((data) => {
                             if (!data.error) {
-                                if (hasFlop) {
+                                if (hasFlop || hasTurn)  {
                                     const equity_results = data.equity_results;
                                     if (equity_results && Object.keys(equity_results).length > 0) {
                                         const formatted = Object.entries(equity_results)
@@ -126,7 +135,10 @@ export default function Player({ player, onUpdate, disabled, position, dealerPos
                 <div className="hole-cards-and-button">
                     <div className="hole-cards">
                         {(HoleCards?.length > 0 ? HoleCards : [" ", " "]).map((card, index) => (
-                            <span key={index} className="card">{card}</span>
+                            // <span key={index} className="card">{card}</span>
+                            <span key={index} className={`card ${/♥|♦/.test(card) ? 'red-suit' : 'black-suit'}`}>
+                                {card}
+                            </span>
                         ))}
                     </div>
                     {position === dealerPosition && <div className="dealer-button">B</div>}
