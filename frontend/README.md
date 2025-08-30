@@ -73,6 +73,7 @@ This will launch the test runner in interactive watch mode.
   - **`components/`**: Contains reusable React components:
     - **`HoleCardSelector.js`**: Component for selecting and inputting hole cards for a player.
     - **`FlopCardSelector.js`**: Component for selecting and inputting flop cards during the game.
+    - **`TurnCardSelector.js`**: Component for selecting and inputting turn card during the game.
     - **`Player.js`**: Represents a player at the table, including their actions, status, and cards.
     - **`Table.js`**: Represents the poker table layout, including player positions and game state.
 
