@@ -16,7 +16,12 @@ class Game:
         :param players: List of player names.
         :param starting_stack: The amount of chips each player starts with.
         """
+
         # self.players = [Player(name, stack, i) for i, (name, stack) in enumerate(zip(players, starting_stacks))]
+        self.awaiting_flop_input = False
+        self.awaiting_turn_input = False
+        
+        self.updated_ranges = {}
         self.players = []
         for idx, (name, stack) in enumerate(zip(players, starting_stacks)):
             self.players.append(Player(name, stack, idx))
@@ -62,9 +67,10 @@ class Game:
         self.execute_betting_round("Preflop")
 
         if self.hand_continues():
-            self.awaiting_flop_input = True  # ✅ ADD THIS
+            self.awaiting_flop_input = True
             
-        print("after waitingself.current_bet: ", self.current_bet)
+        print("after waiting self.current_bet: ", self.current_bet)
+
         # if self.hand_continues():
         #     self.deal_community_cards(3, "Flop")
         #     self.execute_betting_round("Flop")
@@ -185,7 +191,7 @@ class Game:
             preflop = True
         self.current_betting_round = BettingRound(
             players=self.players, 
-            pot=self.pot, 
+            pot=self.pot,
             dealer_position=self.dealer_position,
             sb_position=self.small_blind_position,
             bb_position=self.big_blind_position,
@@ -193,10 +199,11 @@ class Game:
             preflop=preflop,
         )
 
-        self.current_betting_round.process_actions() # <- line not needed for frontend, but needed if playing with terminal
+        self.current_betting_round.process_actions(self) # <- line not needed for frontend, but needed if playing with terminal
         print("self.pot: ", self.pot)
         print("self.current_betting_round.pot: ", self.current_betting_round.pot)
         self.pot = self.current_betting_round.pot  # Update the total pot
+
 
     def hand_continues(self):
         """

@@ -101,7 +101,7 @@ class BettingRound:
             self.last_raiser = player
 
 
-    def process_actions(self):
+    def process_actions(self, game=None):
         """
         Handles a full betting round, ensuring correct betting order.
         """
@@ -139,6 +139,10 @@ class BettingRound:
             # Stop when no raises have occurred
             if not action_taken:
                 break  # Betting round ends
+        
+        if game and not self.preflop and len(game.community_cards) == 3:
+            if game.hand_continues():
+                game.awaiting_turn_input = True
 
 
     def find_first_active_player_postflop(self):

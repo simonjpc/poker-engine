@@ -17,7 +17,7 @@ equity_map = {
     12: {"percent_on_2_coming_cards": 45.0, "percent_on_1_coming_cards": 27.2},
     13: {"percent_on_2_coming_cards": 45.0, "percent_on_1_coming_cards": 27.2},
     14: {"percent_on_2_coming_cards": 45.0, "percent_on_1_coming_cards": 27.2},
-    15: {"percent_on_2_coming_cards": 64.8, "percent_on_1_coming_cards": 38.3},
+    15: {"percent_on_2_coming_cards": 57.3, "percent_on_1_coming_cards": 38.3},
 }
 
 def recommend_action(hero_hand, community, updated_opponent_range, round):
@@ -38,7 +38,7 @@ def recommend_action(hero_hand, community, updated_opponent_range, round):
 
         # Map to equity
         if num_outs > 15:
-            equity = 64.8 if round == "flop" else 38.3
+            equity = 64.8 if round == "flop" else 47.1
         else:
             equity = (
                 equity_map.get(num_outs, {}).get("percent_on_2_coming_cards", 0.0)
