@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import Table from "./components/Table";
 import HoleCardSelector from "./components/HoleCardSelector";
 import FlopCardSelector from "./components/FlopCardSelector";
+import TurnCardSelector from "./components/TurnCardSelector";
 import { sendGameConfig, startGame, fetchGameState, resetGame } from "./api";
 import "./App.css";
 
 const DEFAULT_STACK = 20000;
 const API_URL = "http://localhost:4000";
+// const cards = [];
 
 const INITIAL_PLAYERS = [
   { id: 0, name: "Anne", amount: DEFAULT_STACK, available: true },
@@ -26,7 +28,9 @@ function App() {
   const [resetSignal, setResetSignal] = useState(false);
   const [cardInput, setCardInput] = useState("");  // 4-letter string
   const [flopInput, setFlopInput] = useState("");  // 6-letter string
+  const [turnInput, setTurnInput] = useState("");  // 2-letter string
   const [waitingForFlop, setWaitingForFlop] = useState(false);
+  const [waitingForTurn, setWaitingForTurn] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -41,6 +45,12 @@ function App() {
       if (state.awaiting_flop_input && !waitingForFlop) {
         console.log("Triggering waitingForFlop");
         setWaitingForFlop(true);
+      }
+      
+      // Wait for user to input turn if preflop and flop is done
+      if (state.awaiting_turn_input && !waitingForTurn) {
+        console.log("Triggering waitingForTurn");
+        setWaitingForTurn(true);
       }
 
       setTimeout(poll, 200);  // Reschedule next poll
@@ -143,7 +153,9 @@ function App() {
     // Reset frontend state
     setCardInput("");
     setFlopInput("");
+    setTurnInput("");
     setWaitingForFlop(false);
+    setWaitingForTurn(false);
     setGameStarted(false);
     setGameState(null);
     setActivePlayer(null);
@@ -212,6 +224,61 @@ function App() {
     }
   };
 
+  const handleSubmitTurn = async () => {
+    const parseTurn = (input) => {
+      const validSuits = ["s", "h", "d", "c"];
+      const validRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+      const rankMap = { "/": "T", "*": "J", "-": "Q", "+": "K", "0": "A" };
+      const suitMap = { "u": "s", "i": "c", "o": "d", "p": "h" };
+    
+      if (input.length === 2) {
+        const cards = [];
+        for (let i = 0; i < 1; i++) {
+          const r = rankMap[input[i * 2]] || input[i * 2].toUpperCase();
+          const s = suitMap[input[i * 2 + 1]] || input[i * 2 + 1];
+    
+          if (validRanks.includes(r) && validSuits.includes(s)) {
+            cards.push(`${r}${convertSuit(s)}`);
+          } else {
+            return null;
+          }
+        }
+        return cards;
+      }
+      return null;
+    };
+  
+    const convertSuit = (suit) => {
+      switch (suit) {
+        case "s": return "♠";
+        case "h": return "♥";
+        case "d": return "♦";
+        case "c": return "♣";
+        default: return suit;
+      }
+    };
+  
+    const parsedTurn = parseTurn(turnInput);
+    console.log("Parsed Turn:", parsedTurn)
+    if (!parsedTurn) {
+      alert("Invalid turn input. Use format like qc");
+      return;
+    }
+  
+    try {
+      await fetch(`${API_URL}/set_turn`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ turn_cards: parsedTurn }),
+      });
+  
+      setTurnInput("");
+      setWaitingForTurn(false);
+    } catch (e) {
+      console.error("Error sending turn:", e);
+    }
+  };
+
   const nudgeButton = (delta) => {
     if (gameStarted) return;
     setButtonPlayerId((prevId) => {
@@ -275,9 +342,20 @@ function App() {
           disabled={false}
         />
       )}
+      {waitingForTurn && boardCount === 3 && (
+        <TurnCardSelector
+          turnInput={turnInput}
+          setTurnInput={setTurnInput}
+          onSubmit={handleSubmitTurn}
+          disabled={false}
+        />
+      )}
       <div className="community-cards">
         {gameState?.community_cards?.map((card, index) => (
-          <span key={index} className="card">{card}</span>
+          // <span key={index} className="card">{card}</span>
+          <span key={index} className={`card ${/♥|♦/.test(card) ? 'red-suit' : 'black-suit'}`}>
+            {card}
+          </span>
         ))}
       </div>
     </div>

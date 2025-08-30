@@ -52,3 +52,11 @@
   font-weight: bold;
   border-radius: 6px;
 }
+
+.community-cards .card.red-suit {
+  color: red;
+}
+
+.community-cards .card.black-suit {
+  color: black;
+}

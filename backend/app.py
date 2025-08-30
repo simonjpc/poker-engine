@@ -10,7 +10,6 @@ CORS(app, supports_credentials=True)
 
 game_instance = None
 config_locked = False
-updated_ranges = {}
 
 @app.route('/game_state', methods=['GET'])
 def get_game_state():
@@ -41,6 +40,7 @@ def get_game_state():
                 "dealer_position": game_instance.dealer_position,
                 "active_player": active_player_name,
                 "awaiting_flop_input": game_instance.awaiting_flop_input if hasattr(game_instance, "awaiting_flop_input") else False,
+                "awaiting_turn_input": game_instance.awaiting_turn_input if hasattr(game_instance, "awaiting_turn_input") else False,
             }
     return jsonify(game_state)
 
@@ -198,6 +198,8 @@ def set_flop():
     import threading
     def start_flop_betting_round():
         game_instance.execute_betting_round("Flop")
+        # if game_instance.hand_continues():
+        #     game_instance.awaiting_turn_input = True
     threading.Thread(target=start_flop_betting_round, daemon=True).start()
 
     return jsonify({"message": "Flop set"})
@@ -221,12 +223,13 @@ def recommend_flop_action_route():
         big_blind=game_instance.big_blind,
         dealer_position=game_instance.dealer_position,
     )
+    game_instance.updated_ranges = updated_ranges
     
     hero_hand = player.hole_cards
     flop = game_instance.community_cards[:3]
     
     opponent_ranges = {
-        pos: rng for pos, rng in updated_ranges.items()
+        pos: rng for pos, rng in game_instance.updated_ranges.items()
         if pos != determine_position(
             (player.position - game_instance.dealer_position) % len(game_instance.players),
             len(game_instance.players)
@@ -248,16 +251,43 @@ def recommend_flop_action_route():
 
 @app.route('/set_turn', methods=['POST'])
 def set_turn():
-    # TODO
-    pass
+    if not game_instance or not game_instance.current_betting_round:
+        return jsonify({"error": "Game not active"}), 400
+
+    data = request.get_json()
+    cards = data.get("turn_cards", []) # check where turn cards come from in the frontend
+
+    if len(cards) != 1:
+        return jsonify({"error": "Turn must have 4 cards"}), 400
+
+    # Prevent duplicate turn if already dealt
+    if len(game_instance.community_cards) >= 4:
+        return jsonify({"error": "Turn already set"}), 400
+    
+    # Remove from deck
+    game_instance.deck.cards = [c for c in game_instance.deck.cards if c not in cards]
+    game_instance.community_cards.extend(cards)
+    print(f"✅ Turn set to: {cards}")
+
+    game_instance.awaiting_turn_input = False # add flag for turn round
+
+    # Proceed with the next betting round
+    # game_instance.execute_betting_round("Turn")
+    # 🔹 Instead of calling execute_betting_round("Turn") directly:
+    import threading
+    def start_turn_betting_round():
+        game_instance.execute_betting_round("Turn")
+    threading.Thread(target=start_turn_betting_round, daemon=True).start()
+
+    return jsonify({"message": "Turn set"})
 
 @app.route('/recommend_turn_action', methods=['POST'])
 def recommend_turn_action_route():
     """
-    Recommends an action based on your hand, the flop, and opponent's range.
+    Recommends an action based on your hand, the turn, and opponent's range.
     """
     if not game_instance or not game_instance.community_cards or len(game_instance.community_cards) < 4:
-        return jsonify({"error": "Flop not dealt yet"}), 400
+        return jsonify({"error": "Turn not dealt yet"}), 400
 
     player = next((p for p in game_instance.players if p.name.lower() == "you"), None)
     if not player or player.folded or player.all_in:
@@ -271,10 +301,11 @@ def recommend_turn_action_route():
     #     dealer_position=game_instance.dealer_position,
     #     initial_ranges=updated_ranges,
     # )
+    updated_ranges = game_instance.updated_ranges
     
     hero_hand = player.hole_cards
     turn = game_instance.community_cards[:4]
-    
+
     opponent_ranges = {
         pos: rng for pos, rng in updated_ranges.items()
         if pos != determine_position(
@@ -282,6 +313,9 @@ def recommend_turn_action_route():
             len(game_instance.players)
         )
     }
+    print("inside turn recommendation")
+    print("updated_ranges: ", updated_ranges)
+    print("opponent_ranges: ", opponent_ranges)
 
     equity_results = recommend_action(
         hero_hand=hero_hand,
